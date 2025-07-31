@@ -153,7 +153,6 @@
                            class="form-checkbox mr-4">
                     <div class="{{if eq .Status "complete"}}line-through text-slate-400 dark:text-gray-500{{else}}text-slate-800 dark:text-gray-100{{end}}">
                         <div class="font-medium">{{.Title}}</div>
-                        <!-- Debug: Categories count: {{len .Categories}} -->
                         {{if .Categories}}
                         <div class="text-xs flex flex-wrap gap-1 mt-1">
                             {{range .Categories}}
@@ -162,8 +161,6 @@
                             </span>
                             {{end}}
                         </div>
-                        {{else}}
-                        <div class="text-xs text-gray-400 mt-1">カテゴリーなし (ID: {{.ID}})</div>
                         {{end}}
                     </div>
                 </div>
