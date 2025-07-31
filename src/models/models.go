@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"log"
 	"time"
 )
 
@@ -166,6 +167,12 @@ func (r *TodoRepository) GetCategoriesForTodo(todoID int) ([]Category, error) {
 		}
 		categories = append(categories, category)
 	}
+
+	// Debug: Log categories for todo
+	if len(categories) > 0 {
+		log.Printf("Todo %d has %d categories: %v", todoID, len(categories), categories)
+	}
+
 	return categories, nil
 }
 

@@ -1,12 +1,14 @@
 {{template "layout.html" .}}
 
 {{define "content"}}
+<!-- Page Header -->
 <div class="sm:flex sm:justify-between sm:items-center mb-8">
     <div class="mb-4 sm:mb-0">
         <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-gray-100 font-bold">Todo List ✨</h1>
     </div>
 </div>
 
+<!-- Main Grid Layout -->
 <div class="grid grid-cols-12 gap-6">
     <!-- Todo List Column -->
     <div class="col-span-12 xl:col-span-8">
@@ -17,24 +19,31 @@
             </header>
             <div class="p-5">
                 <form hx-post="/todos" hx-target="#todo-list" hx-swap="innerHTML" hx-on::after-request="this.reset(); clearSelectedCategories();">
+                    <!-- Title Input -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="title">タイトル <span class="text-rose-500">*</span></label>
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="title">
+                            タイトル <span class="text-rose-500">*</span>
+                        </label>
                         <input id="title" name="title" class="form-input w-full dark:bg-gray-800 dark:border-gray-700/60 dark:text-gray-300 dark:placeholder-gray-500" type="text" required />
                     </div>
-                                         <div class="mb-4">
-                         <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300">カテゴリ</label>
-                         <div class="flex flex-wrap gap-2">
-                             {{range .Categories}}
-                                                           <button type="button" 
-                                      onclick="toggleCategory(this, '{{.ID}}')" 
-                                      class="btn-sm bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200"
-                                      data-category-id="{{.ID}}">
-                                  {{.Title}}
-                              </button>
-                             {{end}}
-                         </div>
-                         <input type="hidden" name="categories" id="selected-categories" value="">
-                     </div>
+                    
+                    <!-- Category Selection -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300">カテゴリ</label>
+                        <div class="flex flex-wrap gap-2">
+                            {{range .Categories}}
+                            <button type="button" 
+                                    onclick="toggleCategory(this, '{{.ID}}')" 
+                                    class="btn-sm bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200"
+                                    data-category-id="{{.ID}}">
+                                {{.Title}}
+                            </button>
+                            {{end}}
+                        </div>
+                        <input type="hidden" name="categories" id="selected-categories" value="">
+                    </div>
+                    
+                    <!-- Submit Button -->
                     <div class="flex flex-wrap justify-end space-x-2">
                         <button class="btn bg-indigo-500 hover:bg-indigo-600 text-white" type="submit">
                             <svg class="w-4 h-4 fill-current opacity-50 shrink-0" viewBox="0 0 16 16">
@@ -47,16 +56,18 @@
             </div>
         </div>
 
-        <!-- Filter -->
+        <!-- Filter Section -->
         <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60 mb-6">
             <div class="px-5 py-4">
                 <div class="flex flex-wrap items-center space-x-2">
                     <span class="text-sm font-medium text-slate-800 dark:text-gray-100">フィルタ:</span>
-                    <a href="/?page=1&page_size={{.Pagination.PageSize}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq .Filter ""}}bg-indigo-500 text-white{{end}}">
+                    <a href="/?page=1&page_size={{.Pagination.PageSize}}" 
+                       class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq .Filter ""}}bg-indigo-500 text-white{{end}}">
                         すべて
                     </a>
                     {{range .Categories}}
-                    <a href="/?category={{.ID}}&page=1&page_size={{$.Pagination.PageSize}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq $.Filter (printf "%d" .ID)}}bg-indigo-500 text-white{{end}}">
+                    <a href="/?category={{.ID}}&page=1&page_size={{$.Pagination.PageSize}}" 
+                       class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq $.Filter (printf "%d" .ID)}}bg-indigo-500 text-white{{end}}">
                         {{.Title}}
                     </a>
                     {{end}}
@@ -64,7 +75,7 @@
             </div>
         </div>
 
-        <!-- Todo List -->
+        <!-- Todo List Container -->
         <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60">
             <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
                 <div class="flex items-center justify-between">
@@ -90,7 +101,9 @@
             <div class="p-5">
                 <form hx-post="/categories" hx-target="#categories-list" hx-swap="innerHTML">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="category-title">カテゴリ名 <span class="text-rose-500">*</span></label>
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="category-title">
+                            カテゴリ名 <span class="text-rose-500">*</span>
+                        </label>
                         <input id="category-title" name="title" class="form-input w-full dark:bg-gray-800 dark:border-gray-700/60 dark:text-gray-300 dark:placeholder-gray-500" type="text" required />
                     </div>
                     <div class="flex flex-wrap justify-end space-x-2">
@@ -122,6 +135,7 @@
 <div class="p-3">
     {{if .Todos}}
     {{range .Todos}}
+    <!-- Todo Item -->
     <div class="flex items-center py-2 border-b border-slate-100 dark:border-gray-700/60 last:border-b-0">
         <div class="w-9 h-9 rounded-full shrink-0 bg-gradient-to-tr from-sky-500 to-sky-400 mr-3">
             <svg class="w-9 h-9 fill-current text-white" viewBox="0 0 36 36">
@@ -139,14 +153,17 @@
                            class="form-checkbox mr-4">
                     <div class="{{if eq .Status "complete"}}line-through text-slate-400 dark:text-gray-500{{else}}text-slate-800 dark:text-gray-100{{end}}">
                         <div class="font-medium">{{.Title}}</div>
+                        <!-- Debug: Categories count: {{len .Categories}} -->
                         {{if .Categories}}
                         <div class="text-xs flex flex-wrap gap-1 mt-1">
                             {{range .Categories}}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-slate-400">
                                 {{.Title}}
                             </span>
                             {{end}}
                         </div>
+                        {{else}}
+                        <div class="text-xs text-gray-400 mt-1">カテゴリーなし (ID: {{.ID}})</div>
                         {{end}}
                     </div>
                 </div>
@@ -166,6 +183,7 @@
     <!-- Pagination -->
     {{if gt .Pagination.TotalPages 1}}
     <div class="flex items-center justify-between border-t border-slate-100 dark:border-gray-700/60 pt-4 mt-4">
+        <!-- Page Size Selector -->
         <div class="flex items-center space-x-2">
             <span class="text-sm text-slate-500 dark:text-gray-400">ページサイズ:</span>
             <select class="form-select text-sm" onchange="changePageSize(this.value)">
@@ -176,6 +194,7 @@
             </select>
         </div>
         
+        <!-- Pagination Controls -->
         <div class="flex items-center space-x-1">
             <!-- Previous Page -->
             {{if gt .Pagination.Page 1}}
@@ -242,6 +261,7 @@
     {{end}}
     
     {{else}}
+    <!-- Empty State -->
     <div class="text-center py-8">
         <div class="text-slate-400 dark:text-gray-500">
             <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,58 +274,61 @@
     {{end}}
 </div>
 
- <script>
- function changePageSize(size) {
-     const url = new URL(window.location);
-     url.searchParams.set('page_size', size);
-     url.searchParams.set('page', '1');
-     window.location.href = url.toString();
- }
- 
-               function toggleCategory(button, categoryId) {
-        const isSelected = button.classList.contains('bg-violet-500');
-        const selectedCategoriesInput = document.getElementById('selected-categories');
-        let selectedCategories = selectedCategoriesInput.value ? selectedCategoriesInput.value.split(',') : [];
-        
-        if (isSelected) {
-            // 選択解除
-            button.classList.remove('bg-violet-500', 'text-white', 'border-violet-500', 'shadow-md', 'hover:bg-blue-50', 'hover:border-blue-400');
-            button.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-blue-50', 'hover:border-blue-400');
-            button.classList.add('dark:bg-gray-800', 'dark:text-gray-300', 'dark:border-gray-600', 'dark:hover:bg-gray-700', 'dark:hover:border-blue-500');
-            selectedCategories = selectedCategories.filter(id => id !== categoryId);
-        } else {
-            // 選択
-            button.classList.remove('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-blue-50', 'hover:border-blue-400');
-            button.classList.remove('dark:bg-gray-800', 'dark:text-gray-300', 'dark:border-gray-600', 'dark:hover:bg-gray-700', 'dark:hover:border-blue-500');
-            button.classList.add('bg-violet-500', 'text-white', 'border-violet-500', 'shadow-md', 'hover:bg-violet-600', 'hover:border-violet-600');
-            selectedCategories.push(categoryId);
-        }
-        
-        selectedCategoriesInput.value = selectedCategories.join(',');
+<!-- JavaScript Functions -->
+<script>
+// Change page size and redirect
+function changePageSize(size) {
+    const url = new URL(window.location);
+    url.searchParams.set('page_size', size);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+
+// Toggle category selection
+function toggleCategory(button, categoryId) {
+    const isSelected = button.classList.contains('bg-violet-500');
+    const selectedCategoriesInput = document.getElementById('selected-categories');
+    let selectedCategories = selectedCategoriesInput.value ? selectedCategoriesInput.value.split(',') : [];
+    
+    if (isSelected) {
+        // Deselect category
+        button.classList.remove('bg-violet-500', 'text-white', 'border-violet-500', 'shadow-md', 'hover:bg-blue-50', 'hover:border-blue-400');
+        button.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-blue-50', 'hover:border-blue-400');
+        button.classList.add('dark:bg-gray-800', 'dark:text-gray-300', 'dark:border-gray-600', 'dark:hover:bg-gray-700', 'dark:hover:border-blue-500');
+        selectedCategories = selectedCategories.filter(id => id !== categoryId);
+    } else {
+        // Select category
+        button.classList.remove('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-blue-50', 'hover:border-blue-400');
+        button.classList.remove('dark:bg-gray-800', 'dark:text-gray-300', 'dark:border-gray-600', 'dark:hover:bg-gray-700', 'dark:hover:border-blue-500');
+        button.classList.add('bg-violet-500', 'text-white', 'border-violet-500', 'shadow-md', 'hover:bg-violet-600', 'hover:border-violet-600');
+        selectedCategories.push(categoryId);
     }
     
-    function clearSelectedCategories() {
-        // 選択されたカテゴリボタンをすべてリセット
-        const categoryButtons = document.querySelectorAll('[data-category-id]');
-        categoryButtons.forEach(button => {
-            button.classList.remove('bg-violet-500', 'text-white', 'border-violet-500', 'shadow-md', 'hover:bg-violet-600', 'hover:border-violet-600');
-            button.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-blue-50', 'hover:border-blue-400');
-            button.classList.add('dark:bg-gray-800', 'dark:text-gray-300', 'dark:border-gray-600', 'dark:hover:bg-gray-700', 'dark:hover:border-blue-500');
-        });
-        
-        // 隠しフィールドをクリア
-        const selectedCategoriesInput = document.getElementById('selected-categories');
-        if (selectedCategoriesInput) {
-            selectedCategoriesInput.value = '';
-        }
+    selectedCategoriesInput.value = selectedCategories.join(',');
+}
+
+// Clear all selected categories
+function clearSelectedCategories() {
+    const categoryButtons = document.querySelectorAll('[data-category-id]');
+    categoryButtons.forEach(button => {
+        button.classList.remove('bg-violet-500', 'text-white', 'border-violet-500', 'shadow-md', 'hover:bg-violet-600', 'hover:border-violet-600');
+        button.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-blue-50', 'hover:border-blue-400');
+        button.classList.add('dark:bg-gray-800', 'dark:text-gray-300', 'dark:border-gray-600', 'dark:hover:bg-gray-700', 'dark:hover:border-blue-500');
+    });
+    
+    const selectedCategoriesInput = document.getElementById('selected-categories');
+    if (selectedCategoriesInput) {
+        selectedCategoriesInput.value = '';
     }
- </script>
+}
+</script>
 {{end}}
 
 {{define "categories-list"}}
 <div class="p-3">
     {{if .Categories}}
     {{range .Categories}}
+    <!-- Category Item -->
     <div class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-gray-700/60 last:border-b-0">
         <div class="flex items-center">
             <div class="w-2 h-2 rounded-full bg-indigo-400 mr-3"></div>
@@ -323,6 +346,7 @@
     </div>
     {{end}}
     {{else}}
+    <!-- Empty Categories State -->
     <div class="text-center py-4">
         <p class="text-sm text-slate-400 dark:text-gray-500">カテゴリがありません</p>
     </div>

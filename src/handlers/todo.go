@@ -104,11 +104,14 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categoryIDsStr := r.Form["categories"]
+	categoriesStr := r.FormValue("categories")
 	var categoryIDs []int
-	for _, idStr := range categoryIDsStr {
-		if id, err := strconv.Atoi(idStr); err == nil {
-			categoryIDs = append(categoryIDs, id)
+	if categoriesStr != "" {
+		categoryIDStrs := strings.Split(categoriesStr, ",")
+		for _, idStr := range categoryIDStrs {
+			if id, err := strconv.Atoi(strings.TrimSpace(idStr)); err == nil && id > 0 {
+				categoryIDs = append(categoryIDs, id)
+			}
 		}
 	}
 
