@@ -30,7 +30,7 @@ func TestTodoRepository_GetAllTodos(t *testing.T) {
 
 	// Mock query expectations
 	rows := sqlmock.NewRows([]string{"id", "title", "status", "created_at", "updated_at"}).
-		AddRow(1, "Test Todo", "pending", mockTime, mockTime)
+		AddRow(1, "Test Todo", "incomplete", mockTime, mockTime)
 
 	testDB.Mock.ExpectQuery("SELECT DISTINCT t.id, t.title, t.status, t.created_at, t.updated_at").
 		WillReturnRows(rows)
@@ -47,7 +47,7 @@ func TestTodoRepository_GetAllTodos(t *testing.T) {
 	assert.Len(t, todos, 1)
 	assert.Equal(t, 1, todos[0].ID)
 	assert.Equal(t, "Test Todo", todos[0].Title)
-	assert.Equal(t, "pending", todos[0].Status)
+	assert.Equal(t, "incomplete", todos[0].Status)
 
 	require.NoError(t, testDB.Mock.ExpectationsWereMet())
 }
@@ -116,10 +116,10 @@ func TestTodoRepository_UpdateTodoStatus(t *testing.T) {
 	repo := models.NewTodoRepository(testDB.DB)
 
 	testDB.Mock.ExpectExec("UPDATE todos SET status = \\?, updated_at = CURRENT_TIMESTAMP WHERE id = \\?").
-		WithArgs("completed", 1).
+		WithArgs("complete", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err := repo.UpdateTodoStatus(1, "completed")
+	err := repo.UpdateTodoStatus(1, "complete")
 
 	require.NoError(t, err)
 	require.NoError(t, testDB.Mock.ExpectationsWereMet())

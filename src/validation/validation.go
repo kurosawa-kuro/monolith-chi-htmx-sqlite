@@ -114,7 +114,7 @@ func ValidateID(idStr string) (int, *ValidationResult) {
 func ValidateStatus(status string) *ValidationResult {
 	result := NewValidationResult()
 
-	validStatuses := []string{"pending", "in_progress", "completed"}
+	validStatuses := []string{"incomplete", "complete"}
 	isValid := false
 
 	for _, validStatus := range validStatuses {
@@ -125,7 +125,7 @@ func ValidateStatus(status string) *ValidationResult {
 	}
 
 	if !isValid {
-		result.AddError("Invalid status. Must be one of: pending, in_progress, completed")
+		result.AddError("Invalid status. Must be one of: incomplete, complete")
 	}
 
 	return result

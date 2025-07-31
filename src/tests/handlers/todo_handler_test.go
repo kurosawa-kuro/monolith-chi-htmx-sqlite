@@ -93,7 +93,7 @@ func TestTodoHandler_IndexHandler_Success(t *testing.T) {
 		{
 			ID:        1,
 			Title:     "Test Todo",
-			Status:    "pending",
+			Status:    "incomplete",
 			CreatedAt: mockTime,
 			UpdatedAt: mockTime,
 		},
@@ -127,7 +127,7 @@ func TestTodoHandler_IndexHandler_WithCategoryFilter(t *testing.T) {
 		{
 			ID:        1,
 			Title:     "Filtered Todo",
-			Status:    "pending",
+			Status:    "incomplete",
 			CreatedAt: mockTime,
 			UpdatedAt: mockTime,
 		},
@@ -191,7 +191,7 @@ func TestTodoHandler_UpdateTodoStatus_Success(t *testing.T) {
 	handler, _ := setupTestHandler()
 
 	data := url.Values{}
-	data.Set("status", "completed")
+	data.Set("status", "complete")
 
 	req := httptest.NewRequest("POST", "/todos/1/status", strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

@@ -102,7 +102,7 @@ func TestTodoService_GetTodos_Success(t *testing.T) {
 		{
 			ID:        1,
 			Title:     "Test Todo",
-			Status:    "pending",
+			Status:    "incomplete",
 			CreatedAt: mockTime,
 			UpdatedAt: mockTime,
 		},
@@ -127,7 +127,7 @@ func TestTodoService_GetTodos_WithCategoryFilter(t *testing.T) {
 		{
 			ID:        1,
 			Title:     "Test Todo",
-			Status:    "pending",
+			Status:    "incomplete",
 			CreatedAt: mockTime,
 			UpdatedAt: mockTime,
 		},
@@ -185,7 +185,7 @@ func TestTodoService_UpdateTodoStatus_Success(t *testing.T) {
 
 	service := services.NewTodoService(todoRepo, categoryRepo)
 
-	err := service.UpdateTodoStatus(1, "completed")
+	err := service.UpdateTodoStatus(1, "complete")
 
 	require.NoError(t, err)
 }

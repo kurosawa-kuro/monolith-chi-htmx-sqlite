@@ -45,15 +45,15 @@ func CreateTempDB(t *testing.T) (*sql.DB, string) {
 	db, err := sql.Open("sqlite3", dbPath)
 	require.NoError(t, err)
 
-	// Read and execute schema
-	schema, err := os.ReadFile("src/db/schema.sql")
+	// Read and execute schema (use test schema without seed data)
+	schema, err := os.ReadFile("src/db/schema_test.sql")
 	if err != nil {
 		// Try relative path from current working directory
-		schema, err = os.ReadFile("../../db/schema.sql")
+		schema, err = os.ReadFile("../../db/schema_test.sql")
 	}
 	if err != nil {
 		// Try absolute path from project root
-		schema, err = os.ReadFile("/home/wsl/dev_my_study/monolith-chi-htmx-sqlite/src/db/schema.sql")
+		schema, err = os.ReadFile("/home/wsl/dev_my_study/monolith-chi-htmx-sqlite/src/db/schema_test.sql")
 	}
 	require.NoError(t, err)
 
@@ -78,7 +78,7 @@ func SampleTodoData() map[string]interface{} {
 	return map[string]interface{}{
 		"id":         1,
 		"title":      "Test Todo",
-		"status":     "pending",
+		"status":     "incomplete",
 		"created_at": MockTime(),
 		"updated_at": MockTime(),
 	}
