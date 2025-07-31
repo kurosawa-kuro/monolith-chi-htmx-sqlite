@@ -26,19 +26,34 @@
 
 ## 起動方法
 
-1. 依存関係のインストール
+### 方法1: 直接実行
 ```bash
+# 依存関係のインストール
 go mod tidy
+
+# アプリケーションの実行
+go run src/main.go
 ```
 
-2. アプリケーションのビルド
+### 方法2: ビルドして実行
 ```bash
-go build -o todo-app main.go
+# 依存関係のインストール
+go mod tidy
+
+# アプリケーションのビルド
+make build
+
+# アプリケーションの実行
+./bin/todo-app
 ```
 
-3. アプリケーションの起動
+### 方法3: Makefileを使用
 ```bash
-./todo-app
+# 開発モード（ビルド + 実行）
+make dev
+
+# または直接実行
+make run
 ```
 
 4. ブラウザで http://localhost:8080 にアクセス
@@ -47,9 +62,8 @@ go build -o todo-app main.go
 
 ```
 /
-├── main.go                 # アプリケーションエントリーポイント
-├── go.mod                  # Go modules設定
 ├── src/
+│   ├── main.go             # アプリケーションエントリーポイント
 │   ├── templates/          # HTMLテンプレート
 │   │   ├── layout.html
 │   │   └── index.html
@@ -59,9 +73,14 @@ go build -o todo-app main.go
 │   │   └── models.go
 │   ├── handlers/           # HTTPハンドラー
 │   │   └── todo.go
-│   └── db/                 # データベーススキーマ
-│       └── schema.sql
-├── template-admin/         # デザインテンプレート
+│   └── db/                 # データベース関連
+│       ├── schema.sql      # データベーススキーマ
+│       └── todo.db         # SQLiteデータベースファイル
+├── bin/                    # ビルド成果物
+│   └── todo-app           # 実行ファイル
+├── go.mod                  # Go modules設定
+├── go.sum                  # 依存関係チェックサム
+├── Makefile                # ビルド・実行スクリプト
 └── docs/                   # 仕様書
     └── 仕様書.md
 ```
@@ -84,9 +103,20 @@ go build -o todo-app main.go
 
 ## 開発
 
+### Makefileコマンド
+```bash
+make help      # 利用可能なコマンドを表示
+make build     # アプリケーションをビルド
+make run       # アプリケーションを実行
+make dev       # ビルドして実行
+make clean     # ビルド成果物を削除
+make fmt       # コードをフォーマット
+make test      # テストを実行
+make db-init   # データベースを初期化
+```
+
 ### CSS開発（Tailwind）
 ```bash
-cd template-admin/html
-npm run dev    # 監視モード
-npm run build  # ビルド
+# 現在は事前ビルドされたCSSを使用
+# 必要に応じてTailwind CLIで再ビルド
 ```

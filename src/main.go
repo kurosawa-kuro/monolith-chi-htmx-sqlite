@@ -59,7 +59,7 @@ func main() {
 }
 
 func initDB() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", "./todo.db")
+	db, err := sql.Open("sqlite3", "./src/db/todo.db")
 	if err != nil {
 		return nil, err
 	}
