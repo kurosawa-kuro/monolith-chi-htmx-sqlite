@@ -7,33 +7,39 @@ import (
 )
 
 // Pagination represents pagination information
+// @Description Pagination information for list responses
 type Pagination struct {
-	Page       int `json:"page"`
-	PageSize   int `json:"page_size"`
-	Total      int `json:"total"`
-	TotalPages int `json:"total_pages"`
+	Page       int `json:"page" example:"1"`        // Current page number
+	PageSize   int `json:"page_size" example:"10"`  // Number of items per page
+	Total      int `json:"total" example:"25"`      // Total number of items
+	TotalPages int `json:"total_pages" example:"3"` // Total number of pages
 }
 
 // PaginatedTodos represents paginated todo results
+// @Description Paginated list of todos with pagination metadata
 type PaginatedTodos struct {
-	Todos      []Todo     `json:"todos"`
-	Pagination Pagination `json:"pagination"`
+	Todos      []Todo     `json:"todos"`      // List of todo items
+	Pagination Pagination `json:"pagination"` // Pagination information
 }
 
+// Todo represents a todo item
+// @Description A todo item with its properties and associated categories
 type Todo struct {
-	ID         int        `json:"id"`
-	Title      string     `json:"title"`
-	Status     string     `json:"status"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	Categories []Category `json:"categories"`
+	ID         int        `json:"id" example:"1"`                            // Unique identifier
+	Title      string     `json:"title" example:"Buy groceries"`             // Todo title
+	Status     string     `json:"status" example:"incomplete"`               // Todo status (incomplete/complete)
+	CreatedAt  time.Time  `json:"created_at" example:"2024-01-01T12:00:00Z"` // Creation timestamp
+	UpdatedAt  time.Time  `json:"updated_at" example:"2024-01-01T12:00:00Z"` // Last update timestamp
+	Categories []Category `json:"categories"`                                // Associated categories
 }
 
+// Category represents a category for organizing todos
+// @Description A category used to organize and group todo items
 type Category struct {
-	ID        int       `json:"id"`
-	Title     string    `json:"title"`
-	CreatedAt time.Time `json:"created_at"`
-	TodoCount int       `json:"todo_count"`
+	ID        int       `json:"id" example:"1"`                            // Unique identifier
+	Title     string    `json:"title" example:"Work"`                      // Category title
+	CreatedAt time.Time `json:"created_at" example:"2024-01-01T12:00:00Z"` // Creation timestamp
+	TodoCount int       `json:"todo_count" example:"5"`                    // Number of todos in this category
 }
 
 type TodoRepository struct {

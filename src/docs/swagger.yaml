@@ -1,0 +1,202 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample server for a todo app.
+  title: Todo API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - text/html
+      description: Display the main todo list page with pagination and category filtering
+      parameters:
+      - description: Category ID to filter todos
+        in: query
+        name: category
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Number of items per page (default: 10, max: 100)'
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page with todo list
+          schema:
+            type: string
+        "400":
+          description: Bad request - invalid pagination parameters
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get todo list page
+      tags:
+      - todos
+  /categories:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Create a new category for organizing todos
+      parameters:
+      - description: Category title
+        in: formData
+        name: title
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "303":
+          description: Redirect to todo list page
+          schema:
+            type: string
+        "400":
+          description: Bad request - invalid form data
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new category
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      consumes:
+      - '*/*'
+      description: Delete a specific category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Category deleted successfully
+          schema:
+            type: string
+        "400":
+          description: Bad request - invalid category ID
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete a category
+      tags:
+      - categories
+  /todos:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Create a new todo item with title and optional category assignments
+      parameters:
+      - description: Todo title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Category IDs to assign to the todo
+        in: formData
+        items:
+          type: integer
+        name: categories
+        type: array
+      produces:
+      - text/html
+      responses:
+        "303":
+          description: Redirect to todo list page
+          schema:
+            type: string
+        "400":
+          description: Bad request - invalid form data
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new todo
+      tags:
+      - todos
+  /todos/{id}:
+    delete:
+      consumes:
+      - '*/*'
+      description: Delete a specific todo item by ID
+      parameters:
+      - description: Todo ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Todo deleted successfully
+          schema:
+            type: string
+        "400":
+          description: Bad request - invalid todo ID
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete a todo
+      tags:
+      - todos
+  /todos/{id}/status:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Update the status of a specific todo item (incomplete/complete)
+      parameters:
+      - description: Todo ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Todo status (incomplete or complete)
+        in: formData
+        name: status
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Status updated successfully
+          schema:
+            type: string
+        "400":
+          description: Bad request - invalid todo ID or status
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update todo status
+      tags:
+      - todos
+swagger: "2.0"

@@ -14,6 +14,7 @@ import (
 	"monolith-chi-htmx-sqlite/src/tests/helpers"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -81,7 +82,7 @@ func setupTestHandler() (*handlers.TodoHandler, *MockTodoService) {
 		MaxPageSize:     100,
 	}
 
-	handler := handlers.NewTodoHandlerWithService(tmpl, config, mockService)
+	handler := handlers.NewTodoHandlerWithService(tmpl, config, mockService, logrus.New())
 	return handler, mockService
 }
 

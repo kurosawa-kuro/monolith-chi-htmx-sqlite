@@ -121,6 +121,17 @@ install-air: ## Install Air for hot reload
 		echo "Air is already installed"; \
 	fi
 
+.PHONY: install-lint
+install-lint: ## Install golangci-lint
+	@echo "Checking golangci-lint installation..."
+	@if ! command -v golangci-lint > /dev/null; then \
+		echo "Installing golangci-lint..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+		echo "golangci-lint installed successfully"; \
+	else \
+		echo "golangci-lint is already installed"; \
+	fi
+
 # =============================================================================
 # Code Quality Commands
 # =============================================================================
@@ -353,3 +364,12 @@ restart: kill-port start ## Restart the application
 # =============================================================================
 
 .DEFAULT_GOAL := help
+
+.PHONY: docs
+# OpenAPI/Swaggerドキュメント生成
+# 例: make docs
+# 依存: swag (go install github.com/swaggo/swag/cmd/swag@latest)
+docs:
+	@echo "Generating OpenAPI/Swagger docs..."
+	@swag init -g src/main.go -o src/docs
+	@echo "Swagger docs generated in src/docs/"
