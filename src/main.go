@@ -2,8 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"monolith-chi-htmx-sqlite/src/config"
@@ -117,7 +117,7 @@ func initDB(dbPath string) (*sql.DB, error) {
 	}
 
 	// Read and execute schema
-	schema, err := ioutil.ReadFile("src/db/schema.sql")
+	schema, err := os.ReadFile("src/db/schema.sql")
 	if err != nil {
 		return nil, err
 	}
