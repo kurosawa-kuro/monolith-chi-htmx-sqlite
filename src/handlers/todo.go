@@ -29,21 +29,38 @@ func NewTodoHandler(db *sql.DB, templates *template.Template) *TodoHandler {
 
 func (h *TodoHandler) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	categoryFilter := r.URL.Query().Get("category")
-	
-	var todos []models.Todo
+	pageStr := r.URL.Query().Get("page")
+	pageSizeStr := r.URL.Query().Get("page_size")
+
+	// Parse pagination parameters
+	page := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	pageSize := 10 // Default page size
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 && ps <= 100 {
+			pageSize = ps
+		}
+	}
+
+	var paginatedTodos *models.PaginatedTodos
 	var err error
-	
+
 	if categoryFilter != "" {
 		categoryID, err := strconv.Atoi(categoryFilter)
 		if err != nil {
 			http.Error(w, "Invalid category ID", http.StatusBadRequest)
 			return
 		}
-		todos, err = h.todoRepo.GetTodosByCategory(categoryID)
+		paginatedTodos, err = h.todoRepo.GetTodosByCategoryPaginated(categoryID, page, pageSize)
 	} else {
-		todos, err = h.todoRepo.GetAllTodos()
+		paginatedTodos, err = h.todoRepo.GetAllTodosPaginated(page, pageSize)
 	}
-	
+
 	if err != nil {
 		log.Printf("Error fetching todos: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -61,10 +78,12 @@ func (h *TodoHandler) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		Todos      []models.Todo
 		Categories []models.Category
 		Filter     string
+		Pagination models.Pagination
 	}{
-		Todos:      todos,
+		Todos:      paginatedTodos.Todos,
 		Categories: categories,
 		Filter:     categoryFilter,
+		Pagination: paginatedTodos.Pagination,
 	}
 
 	if err := h.templates.ExecuteTemplate(w, "index.html", data); err != nil {
@@ -99,7 +118,8 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderTodoList(w, r)
+	// Redirect to first page after creating todo
+	http.Redirect(w, r, "/?page=1", http.StatusSeeOther)
 }
 
 func (h *TodoHandler) UpdateTodoStatus(w http.ResponseWriter, r *http.Request) {
@@ -219,21 +239,38 @@ func (h *TodoHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 
 func (h *TodoHandler) renderTodoList(w http.ResponseWriter, r *http.Request) {
 	categoryFilter := r.URL.Query().Get("category")
-	
-	var todos []models.Todo
+	pageStr := r.URL.Query().Get("page")
+	pageSizeStr := r.URL.Query().Get("page_size")
+
+	// Parse pagination parameters
+	page := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	pageSize := 10 // Default page size
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 && ps <= 100 {
+			pageSize = ps
+		}
+	}
+
+	var paginatedTodos *models.PaginatedTodos
 	var err error
-	
+
 	if categoryFilter != "" {
 		categoryID, err := strconv.Atoi(categoryFilter)
 		if err != nil {
 			http.Error(w, "Invalid category ID", http.StatusBadRequest)
 			return
 		}
-		todos, err = h.todoRepo.GetTodosByCategory(categoryID)
+		paginatedTodos, err = h.todoRepo.GetTodosByCategoryPaginated(categoryID, page, pageSize)
 	} else {
-		todos, err = h.todoRepo.GetAllTodos()
+		paginatedTodos, err = h.todoRepo.GetAllTodosPaginated(page, pageSize)
 	}
-	
+
 	if err != nil {
 		log.Printf("Error fetching todos: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -241,9 +278,11 @@ func (h *TodoHandler) renderTodoList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Todos []models.Todo
+		Todos      []models.Todo
+		Pagination models.Pagination
 	}{
-		Todos: todos,
+		Todos:      paginatedTodos.Todos,
+		Pagination: paginatedTodos.Pagination,
 	}
 
 	if err := h.templates.ExecuteTemplate(w, "todo-list", data); err != nil {

@@ -21,17 +21,17 @@
                         <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="title">タイトル <span class="text-rose-500">*</span></label>
                         <input id="title" name="title" class="form-input w-full dark:bg-gray-800 dark:border-gray-700/60 dark:text-gray-300 dark:placeholder-gray-500" type="text" required />
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300">カテゴリ</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            {{range .Categories}}
-                            <label class="flex items-center">
-                                <input type="checkbox" name="categories" value="{{.ID}}" class="form-checkbox">
-                                <span class="text-sm ml-2 text-slate-700 dark:text-gray-300">{{.Title}}</span>
-                            </label>
-                            {{end}}
-                        </div>
-                    </div>
+                                         <div class="mb-4">
+                         <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300">カテゴリ</label>
+                         <div class="flex flex-wrap gap-3">
+                             {{range .Categories}}
+                             <label class="flex items-center">
+                                 <input type="checkbox" name="categories" value="{{.ID}}" class="form-checkbox">
+                                 <span class="text-sm ml-2 text-slate-700 dark:text-gray-300">{{.Title}}</span>
+                             </label>
+                             {{end}}
+                         </div>
+                     </div>
                     <div class="flex flex-wrap justify-end space-x-2">
                         <button class="btn bg-indigo-500 hover:bg-indigo-600 text-white" type="submit">
                             <svg class="w-4 h-4 fill-current opacity-50 shrink-0" viewBox="0 0 16 16">
@@ -49,11 +49,11 @@
             <div class="px-5 py-4">
                 <div class="flex flex-wrap items-center space-x-2">
                     <span class="text-sm font-medium text-slate-800 dark:text-gray-100">フィルタ:</span>
-                    <a href="/" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq .Filter ""}}bg-indigo-500 text-white{{end}}">
+                    <a href="/?page=1&page_size={{.Pagination.PageSize}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq .Filter ""}}bg-indigo-500 text-white{{end}}">
                         すべて
                     </a>
                     {{range .Categories}}
-                    <a href="/?category={{.ID}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq $.Filter (printf "%d" .ID)}}bg-indigo-500 text-white{{end}}">
+                    <a href="/?category={{.ID}}&page=1&page_size={{$.Pagination.PageSize}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq $.Filter (printf "%d" .ID)}}bg-indigo-500 text-white{{end}}">
                         {{.Title}}
                     </a>
                     {{end}}
@@ -64,7 +64,12 @@
         <!-- Todo List -->
         <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60">
             <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
-                <h2 class="font-semibold text-slate-800 dark:text-gray-100">Todo Items</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="font-semibold text-slate-800 dark:text-gray-100">Todo Items</h2>
+                    <div class="text-sm text-slate-500 dark:text-gray-400">
+                        全 {{.Pagination.Total}} 件中 {{add (mul (sub .Pagination.Page 1) .Pagination.PageSize) 1}}-{{min (mul .Pagination.Page .Pagination.PageSize) .Pagination.Total}} 件を表示
+                    </div>
+                </div>
             </header>
             <div id="todo-list">
                 {{template "todo-list" .}}
@@ -154,6 +159,85 @@
         </div>
     </div>
     {{end}}
+    
+    <!-- Pagination -->
+    {{if gt .Pagination.TotalPages 1}}
+    <div class="flex items-center justify-between border-t border-slate-100 dark:border-gray-700/60 pt-4 mt-4">
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-slate-500 dark:text-gray-400">ページサイズ:</span>
+            <select class="form-select text-sm" onchange="changePageSize(this.value)">
+                <option value="5" {{if eq .Pagination.PageSize 5}}selected{{end}}>5</option>
+                <option value="10" {{if eq .Pagination.PageSize 10}}selected{{end}}>10</option>
+                <option value="20" {{if eq .Pagination.PageSize 20}}selected{{end}}>20</option>
+                <option value="50" {{if eq .Pagination.PageSize 50}}selected{{end}}>50</option>
+            </select>
+        </div>
+        
+        <div class="flex items-center space-x-1">
+            <!-- Previous Page -->
+            {{if gt .Pagination.Page 1}}
+            <a href="?page={{sub .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}{{if ne .Filter ""}}&category={{.Filter}}{{end}}" 
+               class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+                    <path d="M9.707 12.293L5.414 8l4.293-4.293a1 1 0 0 0-1.414-1.414l-5 5a1 1 0 0 0 0 1.414l5 5a1 1 0 0 0 1.414-1.414z" />
+                </svg>
+            </a>
+            {{else}}
+            <span class="btn-sm bg-slate-50 dark:bg-gray-800 text-slate-300 dark:text-gray-600 cursor-not-allowed">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+                    <path d="M9.707 12.293L5.414 8l4.293-4.293a1 1 0 0 0-1.414-1.414l-5 5a1 1 0 0 0 0 1.414l5 5a1 1 0 0 0 1.414-1.414z" />
+                </svg>
+            </span>
+            {{end}}
+            
+            <!-- Page Numbers -->
+            {{$currentPage := .Pagination.Page}}
+            {{$totalPages := .Pagination.TotalPages}}
+            {{$pageSize := .Pagination.PageSize}}
+            {{$filter := .Filter}}
+            
+            {{if gt $currentPage 3}}
+            <a href="?page=1&page_size={{$pageSize}}{{if ne $filter ""}}&category={{$filter}}{{end}}" 
+               class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400">1</a>
+            <span class="btn-sm bg-transparent text-slate-400 dark:text-gray-600">...</span>
+            {{end}}
+            
+            {{range $i := sequence $totalPages}}
+                {{if and (ge $i (sub $currentPage 1)) (le $i (add $currentPage 1))}}
+                    {{if eq $i $currentPage}}
+                    <span class="btn-sm bg-indigo-500 text-white">{{$i}}</span>
+                    {{else}}
+                    <a href="?page={{$i}}&page_size={{$pageSize}}{{if ne $filter ""}}&category={{$filter}}{{end}}" 
+                       class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400">{{$i}}</a>
+                    {{end}}
+                {{end}}
+            {{end}}
+            
+            {{if lt $currentPage (sub $totalPages 2)}}
+            <span class="btn-sm bg-transparent text-slate-400 dark:text-gray-600">...</span>
+            <a href="?page={{$totalPages}}&page_size={{$pageSize}}{{if ne $filter ""}}&category={{$filter}}{{end}}" 
+               class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400">{{$totalPages}}</a>
+            {{end}}
+            
+            <!-- Next Page -->
+            {{if lt .Pagination.Page .Pagination.TotalPages}}
+            <a href="?page={{add .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}{{if ne .Filter ""}}&category={{.Filter}}{{end}}" 
+               class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+                    <path d="M6.293 3.707L10.586 8l-4.293 4.293a1 1 0 0 0 1.414 1.414l5-5a1 1 0 0 0 0-1.414l-5-5a1 1 0 0 0-1.414 1.414z" />
+                </svg>
+            </a>
+            {{else}}
+            <span class="btn-sm bg-slate-50 dark:bg-gray-800 text-slate-300 dark:text-gray-600 cursor-not-allowed">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+                    <path d="M6.293 3.707L10.586 8l-4.293 4.293a1 1 0 0 0 1.414 1.414l5-5a1 1 0 0 0 0-1.414l-5-5a1 1 0 0 0-1.414 1.414z" />
+                </svg>
+            </span>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+    
     {{else}}
     <div class="text-center py-8">
         <div class="text-slate-400 dark:text-gray-500">
@@ -166,6 +250,15 @@
     </div>
     {{end}}
 </div>
+
+<script>
+function changePageSize(size) {
+    const url = new URL(window.location);
+    url.searchParams.set('page_size', size);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+</script>
 {{end}}
 
 {{define "categories-list"}}
@@ -176,6 +269,7 @@
         <div class="flex items-center">
             <div class="w-2 h-2 rounded-full bg-indigo-400 mr-3"></div>
             <span class="text-sm font-medium text-slate-800 dark:text-gray-100">{{.Title}}</span>
+            <span class="text-xs text-slate-500 dark:text-gray-400 ml-2">({{.TodoCount}})</span>
         </div>
         <button hx-delete="/categories/{{.ID}}" 
                 hx-target="#categories-list" 

@@ -5,14 +5,16 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"monolith-chi-htmx-sqlite/src/handlers"
+	"monolith-chi-htmx-sqlite/src/middleware"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,11 +37,11 @@ func main() {
 
 	// Setup router
 	r := chi.NewRouter()
-	
+
 	// Middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Compress(5))
+	r.Use(middleware.FilteredLogger)
+	r.Use(chimiddleware.Recoverer)
+	r.Use(chimiddleware.Compress(5))
 
 	// Static files
 	workDir, _ := filepath.Abs(".")
@@ -79,8 +81,52 @@ func initDB() (*sql.DB, error) {
 }
 
 func loadTemplates() (*template.Template, error) {
-	tmpl := template.New("")
-	
+	// Create template with custom functions
+	funcMap := template.FuncMap{
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"sub": func(a, b int) int {
+			return a - b
+		},
+		"mul": func(a, b int) int {
+			return a * b
+		},
+		"div": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"min": func(a, b int) int {
+			return int(math.Min(float64(a), float64(b)))
+		},
+		"max": func(a, b int) int {
+			return int(math.Max(float64(a), float64(b)))
+		},
+		"ge": func(a, b int) bool {
+			return a >= b
+		},
+		"le": func(a, b int) bool {
+			return a <= b
+		},
+		"gt": func(a, b int) bool {
+			return a > b
+		},
+		"lt": func(a, b int) bool {
+			return a < b
+		},
+		"sequence": func(n int) []int {
+			result := make([]int, n)
+			for i := range result {
+				result[i] = i + 1
+			}
+			return result
+		},
+	}
+
+	tmpl := template.New("").Funcs(funcMap)
+
 	// Load all template files
 	err := filepath.Walk("src/templates", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -96,6 +142,6 @@ func loadTemplates() (*template.Template, error) {
 		}
 		return nil
 	})
-	
+
 	return tmpl, err
 }
