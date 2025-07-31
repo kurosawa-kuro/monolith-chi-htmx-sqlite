@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Simple Playwright configuration for basic testing
  */
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: '../../tests/e2e',
   fullyParallel: false,
   retries: 0,
   workers: 1,

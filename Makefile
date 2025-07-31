@@ -26,7 +26,7 @@ KILL_PORT_SCRIPT := ./script/kill-port.sh
 SEED_DATA_SCRIPT := script/seed_data.go
 
 # Air Configuration
-AIR_CONFIG := .air.toml
+AIR_CONFIG := src/config/.air.toml
 
 # =============================================================================
 # Development Commands
@@ -146,7 +146,7 @@ fmt: ## Format Go code
 lint: ## Run linter
 	@echo "Running linter..."
 	@if command -v golangci-lint > /dev/null; then \
-		golangci-lint run ./$(SOURCE_DIR)/...; \
+		golangci-lint run -c src/config/.golangci.yml ./$(SOURCE_DIR)/...; \
 	else \
 		echo "golangci-lint not found. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
 	fi
@@ -380,7 +380,7 @@ docs:
 # 依存: oapi-codegen (go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest)
 oapi-gen:
 	@echo "Generating OpenAPI code..."
-	@oapi-codegen --package gen --generate types,chi-server -o src/gen/api.gen.go api.yaml
+	@oapi-codegen --package gen --generate types,chi-server -o src/gen/api.gen.go src/api/openapi.yaml
 	@echo "OpenAPI code generated in src/gen/"
 
 .PHONY: oapi-install

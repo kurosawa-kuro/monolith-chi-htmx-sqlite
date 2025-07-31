@@ -4,21 +4,21 @@
   "description": "Go Monolith Application with Chi, HTMX, and SQLite",
   "private": true,
   "scripts": {
-    "test:e2e": "playwright test",
-    "test:e2e:simple": "playwright test --config=playwright.config.simple.ts",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug",
+    "test:e2e": "playwright test --config=src/config/playwright.config.ts",
+    "test:e2e:simple": "playwright test --config=src/config/playwright.config.simple.ts",
+    "test:e2e:ui": "playwright test --config=src/config/playwright.config.ts --ui",
+    "test:e2e:headed": "playwright test --config=src/config/playwright.config.ts --headed",
+    "test:e2e:debug": "playwright test --config=src/config/playwright.config.ts --debug",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install",
     "test:e2e:codegen": "playwright codegen http://localhost:8080",
-    "test:e2e:update": "playwright test --update-snapshots",
-    "test:e2e:parallel": "playwright test --workers=4",
-    "test:e2e:retry": "playwright test --retries=3"
+    "test:e2e:update": "playwright test --config=src/config/playwright.config.ts --update-snapshots",
+    "test:e2e:parallel": "playwright test --config=src/config/playwright.config.ts --workers=4",
+    "test:e2e:retry": "playwright test --config=src/config/playwright.config.ts --retries=3"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.19.9"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -35,4 +35,4 @@
   ],
   "author": "Development Team",
   "license": "MIT"
-} 
+}
