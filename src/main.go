@@ -89,9 +89,15 @@ func main() {
 	filesDir := http.Dir(filepath.Join(workDir, "src/static"))
 	r.Handle("/static/*", http.StripPrefix("/static", http.FileServer(filesDir)))
 
-	// OAPI generated routes (includes GET / for index page)
-	r.Mount("/", gen.HandlerFromMux(oapiHandler, r))
-	
+	// OAPI generated routes with custom error handler
+	handlerOptions := gen.ChiServerOptions{
+		BaseRouter: r,
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			middleware.HandleAppError(logger, w, err)
+		},
+	}
+	r.Mount("/", gen.HandlerWithOptions(oapiHandler, handlerOptions))
+
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler())
 

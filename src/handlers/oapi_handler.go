@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"monolith-chi-htmx-sqlite/src/middleware"
 	"monolith-chi-htmx-sqlite/src/models"
 	"monolith-chi-htmx-sqlite/src/services"
-	"monolith-chi-htmx-sqlite/src/validation"
 
 	"github.com/sirupsen/logrus"
 )
@@ -57,21 +57,18 @@ func (h *OAPIHandler) GetTodoListPage(w http.ResponseWriter, r *http.Request, pa
 		pageSize = *params.PageSize
 	}
 
-	// Validate pagination parameters
-	pageStr := ""
-	if params.Page != nil {
-		pageStr = strconv.Itoa(*params.Page)
-	}
-	pageSizeStr := ""
-	if params.PageSize != nil {
-		pageSizeStr = strconv.Itoa(*params.PageSize)
-	}
-
-	_, _, validationResult := validation.ValidatePagination(pageStr, pageSizeStr, h.config.MaxPageSize)
-	if !validationResult.IsValid {
+	// Validate pagination parameters (using generated parameters)
+	if page < 1 {
 		middleware.HandleValidationError(h.logger, w, &middleware.ValidationResult{
 			IsValid: false,
-			Errors:  validationResult.Errors,
+			Errors:  []string{"page must be greater than 0"},
+		})
+		return
+	}
+	if pageSize < 1 || pageSize > h.config.MaxPageSize {
+		middleware.HandleValidationError(h.logger, w, &middleware.ValidationResult{
+			IsValid: false,
+			Errors:  []string{fmt.Sprintf("page_size must be between 1 and %d", h.config.MaxPageSize)},
 		})
 		return
 	}
@@ -203,4 +200,4 @@ func (h *OAPIHandler) DeleteCategory(w http.ResponseWriter, r *http.Request, id 
 
 	// Return success response for HTMX
 	w.WriteHeader(http.StatusOK)
-} 
+}

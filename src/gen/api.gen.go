@@ -17,6 +17,18 @@ const (
 	Incomplete UpdateTodoStatusFormdataBodyStatus = "incomplete"
 )
 
+// ErrorResponse defines model for ErrorResponse.
+type ErrorResponse struct {
+	// Code HTTP status code
+	Code int `json:"code"`
+
+	// Details Additional error details
+	Details *[]string `json:"details,omitempty"`
+
+	// Error Error message
+	Error string `json:"error"`
+}
+
 // GetTodoListPageParams defines parameters for GetTodoListPage.
 type GetTodoListPageParams struct {
 	// Category Category ID to filter todos

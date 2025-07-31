@@ -47,8 +47,16 @@ paths:
                 type: string
         '400':
           description: Bad request - invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /todos:
     post:
       operationId: CreateTodo
@@ -77,8 +85,16 @@ paths:
           description: Redirect to todo list page
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /todos/{id}:
     delete:
       operationId: DeleteTodo
@@ -96,8 +112,16 @@ paths:
           description: Todo deleted successfully
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /todos/{id}/status:
     post:
       operationId: UpdateTodoStatus
@@ -127,8 +151,16 @@ paths:
           description: Status updated successfully
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /categories:
     post:
       operationId: CreateCategory
@@ -152,8 +184,16 @@ paths:
           description: Redirect to todo list page
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /categories/{id}:
     delete:
       operationId: DeleteCategory
@@ -171,8 +211,16 @@ paths:
           description: Category deleted successfully
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     Todo:
@@ -216,4 +264,21 @@ components:
       required:
         - id
         - title
-        - created_at 
+        - created_at
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: integer
+          description: HTTP status code
+        details:
+          type: array
+          items:
+            type: string
+          description: Additional error details
+      required:
+        - error
+        - code 

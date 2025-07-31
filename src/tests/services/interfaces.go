@@ -19,4 +19,4 @@ type CategoryRepositoryInterface interface {
 	GetAllCategories() ([]models.Category, error)
 	CreateCategory(title string) error
 	DeleteCategory(id int) error
-} 
+}
