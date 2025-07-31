@@ -17,7 +17,7 @@ import (
 )
 
 type TodoHandler struct {
-	todoService *services.TodoService
+	todoService services.TodoServiceInterface
 	templates   *template.Template
 	config      *Config
 }
@@ -30,8 +30,17 @@ type Config struct {
 func NewTodoHandler(db *sql.DB, templates *template.Template, config *Config) *TodoHandler {
 	todoRepo := models.NewTodoRepository(db)
 	categoryRepo := models.NewCategoryRepository(db)
-	todoService := services.NewTodoService(todoRepo, categoryRepo)
+	todoService := services.NewTodoServiceWithRepositories(todoRepo, categoryRepo)
 
+	return &TodoHandler{
+		todoService: todoService,
+		templates:   templates,
+		config:      config,
+	}
+}
+
+// NewTodoHandlerWithService creates a new todo handler with an existing service
+func NewTodoHandlerWithService(templates *template.Template, config *Config, todoService services.TodoServiceInterface) *TodoHandler {
 	return &TodoHandler{
 		todoService: todoService,
 		templates:   templates,

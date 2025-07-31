@@ -6,14 +6,52 @@ import (
 	"monolith-chi-htmx-sqlite/src/validation"
 )
 
+// TodoRepositoryInterface defines the interface for todo repository
+type TodoRepositoryInterface interface {
+	GetAllTodos() ([]models.Todo, error)
+	GetTodosByCategory(categoryID int) ([]models.Todo, error)
+	CreateTodo(title string, categoryIDs []int) error
+	UpdateTodoStatus(id int, status string) error
+	DeleteTodo(id int) error
+	GetCategoriesForTodo(todoID int) ([]models.Category, error)
+	GetAllTodosPaginated(page, pageSize int) (*models.PaginatedTodos, error)
+	GetTodosByCategoryPaginated(categoryID, page, pageSize int) (*models.PaginatedTodos, error)
+}
+
+// CategoryRepositoryInterface defines the interface for category repository
+type CategoryRepositoryInterface interface {
+	GetAllCategories() ([]models.Category, error)
+	CreateCategory(title string) error
+	DeleteCategory(id int) error
+}
+
+// TodoServiceInterface defines the interface for todo service
+type TodoServiceInterface interface {
+	GetTodos(categoryFilter string, page, pageSize int) (*models.PaginatedTodos, error)
+	CreateTodo(title string, categoryIDs []int) error
+	UpdateTodoStatus(id int, status string) error
+	DeleteTodo(id int) error
+	GetCategories() ([]models.Category, error)
+	CreateCategory(title string) error
+	DeleteCategory(id int) error
+}
+
 // TodoService handles business logic for todos
 type TodoService struct {
-	todoRepo     *models.TodoRepository
-	categoryRepo *models.CategoryRepository
+	todoRepo     TodoRepositoryInterface
+	categoryRepo CategoryRepositoryInterface
 }
 
 // NewTodoService creates a new todo service
-func NewTodoService(todoRepo *models.TodoRepository, categoryRepo *models.CategoryRepository) *TodoService {
+func NewTodoService(todoRepo TodoRepositoryInterface, categoryRepo CategoryRepositoryInterface) *TodoService {
+	return &TodoService{
+		todoRepo:     todoRepo,
+		categoryRepo: categoryRepo,
+	}
+}
+
+// NewTodoServiceWithRepositories creates a new todo service with concrete repositories
+func NewTodoServiceWithRepositories(todoRepo *models.TodoRepository, categoryRepo *models.CategoryRepository) *TodoService {
 	return &TodoService{
 		todoRepo:     todoRepo,
 		categoryRepo: categoryRepo,

@@ -10,6 +10,8 @@ import (
 	"monolith-chi-htmx-sqlite/src/config"
 	"monolith-chi-htmx-sqlite/src/handlers"
 	"monolith-chi-htmx-sqlite/src/middleware"
+	"monolith-chi-htmx-sqlite/src/models"
+	"monolith-chi-htmx-sqlite/src/services"
 	"monolith-chi-htmx-sqlite/src/templates"
 
 	"github.com/go-chi/chi/v5"
@@ -35,12 +37,19 @@ func main() {
 	}
 	templates := templateLoader.GetTemplates()
 
+	// Initialize repositories
+	todoRepo := models.NewTodoRepository(db)
+	categoryRepo := models.NewCategoryRepository(db)
+
+	// Initialize services
+	todoService := services.NewTodoServiceWithRepositories(todoRepo, categoryRepo)
+
 	// Initialize handlers
 	handlerConfig := &handlers.Config{
 		DefaultPageSize: cfg.App.DefaultPageSize,
 		MaxPageSize:     cfg.App.MaxPageSize,
 	}
-	todoHandler := handlers.NewTodoHandler(db, templates, handlerConfig)
+	todoHandler := handlers.NewTodoHandlerWithService(templates, handlerConfig, todoService)
 
 	// Setup router
 	r := chi.NewRouter()

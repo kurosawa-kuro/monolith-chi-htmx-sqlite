@@ -158,6 +158,19 @@ test: ## Run Go tests
 	@echo "Running Go tests..."
 	@go test $(TEST_FLAGS) ./$(SOURCE_DIR)/...
 
+.PHONY: test-unit
+test-unit: ## Run unit tests only
+	@echo "Running unit tests..."
+	@go test $(TEST_FLAGS) ./src/tests/models/... ./src/tests/services/... ./src/tests/handlers/...
+
+.PHONY: test-integration
+test-integration: ## Run integration tests only
+	@echo "Running integration tests..."
+	@go test $(TEST_FLAGS) ./src/tests/integration/...
+
+.PHONY: test-all-go
+test-all-go: test-unit test-integration ## Run all Go tests (unit + integration)
+
 .PHONY: test-short
 test-short: ## Run Go tests with short flag
 	@echo "Running short Go tests..."
