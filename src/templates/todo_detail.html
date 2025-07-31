@@ -1,0 +1,252 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<!-- Page Header with Back Button -->
+<div class="sm:flex sm:justify-between sm:items-center mb-8">
+    <div class="mb-4 sm:mb-0">
+        <div class="flex items-center space-x-4">
+            <a href="/" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                戻る
+            </a>
+            <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-gray-100 font-bold">Todo詳細</h1>
+        </div>
+    </div>
+</div>
+
+<!-- Todo Detail Card -->
+<div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60">
+    <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-slate-800 dark:text-gray-100">{{.Todo.Title}}</h2>
+            <div class="flex items-center space-x-2">
+                <!-- Status Badge -->
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{if eq .Todo.Status "complete"}}bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400{{else}}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400{{end}}">
+                    {{if eq .Todo.Status "complete"}}完了{{else}}未完了{{end}}
+                </span>
+                <!-- Edit Button -->
+                <button onclick="toggleEditMode()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    編集
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <div class="p-5">
+        <!-- Todo Information -->
+        <div class="space-y-6">
+            <!-- Title Section -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">タイトル</label>
+                <div id="title-display">
+                    <p class="text-lg text-slate-800 dark:text-gray-100">{{.Todo.Title}}</p>
+                </div>
+                <div id="title-edit" class="hidden">
+                    <input type="text" id="title-input" value="{{.Todo.Title}}" class="form-input w-full dark:bg-gray-800 dark:border-gray-700/60 dark:text-gray-300">
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">ステータス</label>
+                <div id="status-display">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" 
+                               {{if eq .Todo.Status "complete"}}checked{{end}}
+                               hx-post="/todos/{{.Todo.ID}}/status" 
+                               hx-target="#status-display" 
+                               hx-vals='{"status": "{{if eq .Todo.Status "complete"}}incomplete{{else}}complete{{end}}"}'
+                               hx-indicator="#status-loading"
+                               class="form-checkbox">
+                        <span class="text-slate-800 dark:text-gray-100">{{if eq .Todo.Status "complete"}}完了{{else}}未完了{{end}}</span>
+                        <div id="status-loading" class="htmx-indicator">
+                            <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">カテゴリ</label>
+                <div id="categories-display">
+                    {{if .Todo.Categories}}
+                    <div class="flex flex-wrap gap-2">
+                        {{range .Todo.Categories}}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200">
+                            {{.Title}}
+                        </span>
+                        {{end}}
+                    </div>
+                    {{else}}
+                    <p class="text-slate-500 dark:text-gray-400">カテゴリなし</p>
+                    {{end}}
+                </div>
+                <div id="categories-edit" class="hidden">
+                    <div class="flex flex-wrap gap-2">
+                        {{range .Categories}}
+                        <button type="button" 
+                                onclick="toggleCategorySelect(this, '{{.ID}}')" 
+                                class="btn-sm bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200 {{range $.Todo.Categories}}{{if eq .ID $.ID}}bg-violet-500 text-white border-violet-500{{end}}{{end}}"
+                                data-category-id="{{.ID}}">
+                            {{.Title}}
+                        </button>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timestamps Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">作成日時</label>
+                    <p class="text-slate-600 dark:text-gray-400">{{.Todo.CreatedAt.Format "2006-01-02 15:04:05"}}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">更新日時</label>
+                    <p class="text-slate-600 dark:text-gray-400">{{.Todo.UpdatedAt.Format "2006-01-02 15:04:05"}}</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-gray-700/60">
+                <div id="edit-actions" class="hidden space-x-3">
+                    <button onclick="saveTodo()" class="btn bg-indigo-500 hover:bg-indigo-600 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        保存
+                    </button>
+                    <button onclick="cancelEdit()" class="btn bg-gray-500 hover:bg-gray-600 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        キャンセル
+                    </button>
+                </div>
+                <div class="ml-auto">
+                    <button hx-delete="/todos/{{.Todo.ID}}" 
+                            hx-confirm="本当に削除しますか？"
+                            hx-target="body"
+                            hx-push-url="/"
+                            class="btn bg-red-500 hover:bg-red-600 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        削除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Edit Mode -->
+<script>
+let isEditMode = false;
+let originalTitle = "{{.Todo.Title}}";
+let selectedCategories = [{{range $index, $category := .Todo.Categories}}{{if $index}},{{end}}"{{$category.ID}}"{{end}}];
+
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    
+    if (isEditMode) {
+        // Show edit fields
+        document.getElementById('title-display').classList.add('hidden');
+        document.getElementById('title-edit').classList.remove('hidden');
+        document.getElementById('categories-display').classList.add('hidden');
+        document.getElementById('categories-edit').classList.remove('hidden');
+        document.getElementById('edit-actions').classList.remove('hidden');
+    } else {
+        // Show display fields
+        document.getElementById('title-display').classList.remove('hidden');
+        document.getElementById('title-edit').classList.add('hidden');
+        document.getElementById('categories-display').classList.remove('hidden');
+        document.getElementById('categories-edit').classList.add('hidden');
+        document.getElementById('edit-actions').classList.add('hidden');
+    }
+}
+
+function toggleCategorySelect(button, categoryId) {
+    const isSelected = button.classList.contains('bg-violet-500');
+    
+    if (isSelected) {
+        // Deselect category
+        button.classList.remove('bg-violet-500', 'text-white', 'border-violet-500');
+        button.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+        selectedCategories = selectedCategories.filter(id => id !== categoryId);
+    } else {
+        // Select category
+        button.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+        button.classList.add('bg-violet-500', 'text-white', 'border-violet-500');
+        selectedCategories.push(categoryId);
+    }
+}
+
+function saveTodo() {
+    const title = document.getElementById('title-input').value.trim();
+    
+    if (!title) {
+        showErrorMessage('タイトルを入力してください');
+        return;
+    }
+    
+    // Send update request
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('categories', selectedCategories.join(','));
+    
+    fetch('/todos/{{.Todo.ID}}', {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            // Reload page to show updated data
+            window.location.reload();
+        } else {
+            showErrorMessage('更新に失敗しました');
+        }
+    })
+    .catch(error => {
+        showErrorMessage('ネットワークエラーが発生しました');
+    });
+}
+
+function cancelEdit() {
+    // Reset form values
+    document.getElementById('title-input').value = originalTitle;
+    selectedCategories = [{{range $index, $category := .Todo.Categories}}{{if $index}},{{end}}"{{$category.ID}}"{{end}}];
+    
+    // Reset category buttons
+    document.querySelectorAll('[data-category-id]').forEach(button => {
+        const categoryId = button.getAttribute('data-category-id');
+        const isSelected = selectedCategories.includes(categoryId);
+        
+        if (isSelected) {
+            button.classList.add('bg-violet-500', 'text-white', 'border-violet-500');
+            button.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+        } else {
+            button.classList.remove('bg-violet-500', 'text-white', 'border-violet-500');
+            button.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+        }
+    });
+    
+    toggleEditMode();
+}
+
+function showErrorMessage(message) {
+    const errorContainer = document.getElementById('error-container');
+    errorContainer.innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">${message}</div>`;
+    setTimeout(() => errorContainer.innerHTML = '', 5000);
+}
+</script>
+{{end}}

@@ -338,3 +338,54 @@ func (r *CategoryRepository) DeleteCategory(id int) error {
 	_, err := r.db.Exec("DELETE FROM categories WHERE id = ?", id)
 	return err
 }
+
+func (r *TodoRepository) GetTodoByID(id int) (*Todo, error) {
+	query := `
+		SELECT t.id, t.title, t.status, t.created_at, t.updated_at
+		FROM todos t
+		WHERE t.id = ?
+	`
+	var todo Todo
+	err := r.db.QueryRow(query, id).Scan(&todo.ID, &todo.Title, &todo.Status, &todo.CreatedAt, &todo.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	categories, err := r.GetCategoriesForTodo(todo.ID)
+	if err != nil {
+		return nil, err
+	}
+	todo.Categories = categories
+
+	return &todo, nil
+}
+
+func (r *TodoRepository) UpdateTodo(id int, title string, categoryIDs []int) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Update todo title
+	_, err = tx.Exec("UPDATE todos SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", title, id)
+	if err != nil {
+		return err
+	}
+
+	// Delete existing category associations
+	_, err = tx.Exec("DELETE FROM todo_category WHERE todo_id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	// Add new category associations
+	for _, categoryID := range categoryIDs {
+		_, err = tx.Exec("INSERT INTO todo_category (todo_id, category_id) VALUES (?, ?)", id, categoryID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}

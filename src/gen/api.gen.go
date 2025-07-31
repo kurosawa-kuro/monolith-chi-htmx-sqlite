@@ -56,6 +56,15 @@ type CreateTodoFormdataBody struct {
 	Title string `form:"title" json:"title"`
 }
 
+// UpdateTodoFormdataBody defines parameters for UpdateTodo.
+type UpdateTodoFormdataBody struct {
+	// Categories Updated category IDs
+	Categories *[]int `form:"categories,omitempty" json:"categories,omitempty"`
+
+	// Title Updated todo title
+	Title string `form:"title" json:"title"`
+}
+
 // UpdateTodoStatusFormdataBody defines parameters for UpdateTodoStatus.
 type UpdateTodoStatusFormdataBody struct {
 	Status UpdateTodoStatusFormdataBodyStatus `form:"status" json:"status"`
@@ -69,6 +78,9 @@ type CreateCategoryFormdataRequestBody CreateCategoryFormdataBody
 
 // CreateTodoFormdataRequestBody defines body for CreateTodo for application/x-www-form-urlencoded ContentType.
 type CreateTodoFormdataRequestBody CreateTodoFormdataBody
+
+// UpdateTodoFormdataRequestBody defines body for UpdateTodo for application/x-www-form-urlencoded ContentType.
+type UpdateTodoFormdataRequestBody UpdateTodoFormdataBody
 
 // UpdateTodoStatusFormdataRequestBody defines body for UpdateTodoStatus for application/x-www-form-urlencoded ContentType.
 type UpdateTodoStatusFormdataRequestBody UpdateTodoStatusFormdataBody
@@ -90,6 +102,12 @@ type ServerInterface interface {
 	// Delete a todo
 	// (DELETE /todos/{id})
 	DeleteTodo(w http.ResponseWriter, r *http.Request, id int)
+	// Get todo detail page
+	// (GET /todos/{id})
+	GetTodoDetail(w http.ResponseWriter, r *http.Request, id int)
+	// Update a todo
+	// (PUT /todos/{id})
+	UpdateTodo(w http.ResponseWriter, r *http.Request, id int)
 	// Update todo status
 	// (POST /todos/{id}/status)
 	UpdateTodoStatus(w http.ResponseWriter, r *http.Request, id int)
@@ -126,6 +144,18 @@ func (_ Unimplemented) CreateTodo(w http.ResponseWriter, r *http.Request) {
 // Delete a todo
 // (DELETE /todos/{id})
 func (_ Unimplemented) DeleteTodo(w http.ResponseWriter, r *http.Request, id int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get todo detail page
+// (GET /todos/{id})
+func (_ Unimplemented) GetTodoDetail(w http.ResponseWriter, r *http.Request, id int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a todo
+// (PUT /todos/{id})
+func (_ Unimplemented) UpdateTodo(w http.ResponseWriter, r *http.Request, id int) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -256,6 +286,56 @@ func (siw *ServerInterfaceWrapper) DeleteTodo(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteTodo(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTodoDetail operation middleware
+func (siw *ServerInterfaceWrapper) GetTodoDetail(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTodoDetail(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTodo operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTodo(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -417,6 +497,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/todos/{id}", wrapper.DeleteTodo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/todos/{id}", wrapper.GetTodoDetail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/todos/{id}", wrapper.UpdateTodo)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/todos/{id}/status", wrapper.UpdateTodoStatus)

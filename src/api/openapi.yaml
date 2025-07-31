@@ -96,6 +96,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /todos/{id}:
+    get:
+      operationId: GetTodoDetail
+      summary: Get todo detail page
+      description: Display detailed view of a specific todo with edit functionality
+      tags:
+        - todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: HTML page with todo details
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      operationId: UpdateTodo
+      summary: Update a todo
+      description: Update todo title and categories
+      tags:
+        - todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: Updated todo title
+                categories:
+                  type: array
+                  items:
+                    type: integer
+                  description: Updated category IDs
+      responses:
+        '200':
+          description: Todo updated successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       operationId: DeleteTodo
       summary: Delete a todo

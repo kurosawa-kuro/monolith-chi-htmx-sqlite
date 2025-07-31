@@ -10,7 +10,9 @@ import (
 type TodoRepositoryInterface interface {
 	GetAllTodos() ([]models.Todo, error)
 	GetTodosByCategory(categoryID int) ([]models.Todo, error)
+	GetTodoByID(id int) (*models.Todo, error)
 	CreateTodo(title string, categoryIDs []int) error
+	UpdateTodo(id int, title string, categoryIDs []int) error
 	UpdateTodoStatus(id int, status string) error
 	DeleteTodo(id int) error
 	GetCategoriesForTodo(todoID int) ([]models.Category, error)
@@ -28,7 +30,9 @@ type CategoryRepositoryInterface interface {
 // TodoServiceInterface defines the interface for todo service
 type TodoServiceInterface interface {
 	GetTodos(categoryFilter string, page, pageSize int) (*models.PaginatedTodos, error)
+	GetTodoByID(id int) (*models.Todo, error)
 	CreateTodo(title string, categoryIDs []int) error
+	UpdateTodo(id int, title string, categoryIDs []int) error
 	UpdateTodoStatus(id int, status string) error
 	DeleteTodo(id int) error
 	GetCategories() ([]models.Category, error)
@@ -156,6 +160,33 @@ func (s *TodoService) DeleteCategory(id int) error {
 	err := s.categoryRepo.DeleteCategory(id)
 	if err != nil {
 		return errors.NewInternalServerError("Failed to delete category", err)
+	}
+
+	return nil
+}
+
+// GetTodoByID retrieves a todo by ID
+func (s *TodoService) GetTodoByID(id int) (*models.Todo, error) {
+	todo, err := s.todoRepo.GetTodoByID(id)
+	if err != nil {
+		return nil, errors.NewInternalServerError("Failed to fetch todo", err)
+	}
+
+	return todo, nil
+}
+
+// UpdateTodo updates a todo
+func (s *TodoService) UpdateTodo(id int, title string, categoryIDs []int) error {
+	// Validate input
+	validationResult := validation.ValidateTodo(title, categoryIDs)
+	if !validationResult.IsValid {
+		return errors.NewValidationError("Invalid todo data", nil)
+	}
+
+	// Update todo
+	err := s.todoRepo.UpdateTodo(id, title, categoryIDs)
+	if err != nil {
+		return errors.NewInternalServerError("Failed to update todo", err)
 	}
 
 	return nil

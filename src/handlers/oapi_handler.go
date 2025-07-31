@@ -202,3 +202,66 @@ func (h *OAPIHandler) DeleteCategory(w http.ResponseWriter, r *http.Request, id 
 	// Return success response for HTMX
 	w.WriteHeader(http.StatusOK)
 }
+
+// GetTodoDetail implements the GetTodoDetail operation
+func (h *OAPIHandler) GetTodoDetail(w http.ResponseWriter, r *http.Request, id int) {
+	// Get todo by ID using service
+	todo, err := h.todoService.GetTodoByID(id)
+	if err != nil {
+		middleware.HandleAppError(h.logger, w, err)
+		return
+	}
+
+	// Get all categories for the edit form
+	categories, err := h.todoService.GetCategories()
+	if err != nil {
+		middleware.HandleAppError(h.logger, w, err)
+		return
+	}
+
+	data := struct {
+		Todo       *models.Todo
+		Categories []models.Category
+	}{
+		Todo:       todo,
+		Categories: categories,
+	}
+
+	if err := h.templates.ExecuteTemplate(w, "todo_detail.html", data); err != nil {
+		h.logger.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Error executing template")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// UpdateTodo implements the UpdateTodo operation
+func (h *OAPIHandler) UpdateTodo(w http.ResponseWriter, r *http.Request, id int) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	title := strings.TrimSpace(r.FormValue("title"))
+	categoriesStr := r.FormValue("categories")
+
+	// Parse category IDs
+	var categoryIDs []int
+	if categoriesStr != "" {
+		for _, idStr := range strings.Split(categoriesStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(idStr)); err == nil && id > 0 {
+				categoryIDs = append(categoryIDs, id)
+			}
+		}
+	}
+
+	// Update todo using service
+	err := h.todoService.UpdateTodo(id, title, categoryIDs)
+	if err != nil {
+		middleware.HandleAppError(h.logger, w, err)
+		return
+	}
+
+	// Return success response for HTMX
+	w.WriteHeader(http.StatusOK)
+}
