@@ -8,22 +8,34 @@ import (
 	"strconv"
 	"strings"
 
+	"monolith-chi-htmx-sqlite/src/middleware"
 	"monolith-chi-htmx-sqlite/src/models"
+	"monolith-chi-htmx-sqlite/src/services"
+	"monolith-chi-htmx-sqlite/src/validation"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type TodoHandler struct {
-	todoRepo     *models.TodoRepository
-	categoryRepo *models.CategoryRepository
-	templates    *template.Template
+	todoService *services.TodoService
+	templates   *template.Template
+	config      *Config
 }
 
-func NewTodoHandler(db *sql.DB, templates *template.Template) *TodoHandler {
+type Config struct {
+	DefaultPageSize int
+	MaxPageSize     int
+}
+
+func NewTodoHandler(db *sql.DB, templates *template.Template, config *Config) *TodoHandler {
+	todoRepo := models.NewTodoRepository(db)
+	categoryRepo := models.NewCategoryRepository(db)
+	todoService := services.NewTodoService(todoRepo, categoryRepo)
+
 	return &TodoHandler{
-		todoRepo:     models.NewTodoRepository(db),
-		categoryRepo: models.NewCategoryRepository(db),
-		templates:    templates,
+		todoService: todoService,
+		templates:   templates,
+		config:      config,
 	}
 }
 
@@ -32,45 +44,27 @@ func (h *TodoHandler) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	pageSizeStr := r.URL.Query().Get("page_size")
 
-	// Parse pagination parameters
-	page := 1
-	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			page = p
-		}
-	}
-
-	pageSize := 10 // Default page size
-	if pageSizeStr != "" {
-		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 && ps <= 100 {
-			pageSize = ps
-		}
-	}
-
-	var paginatedTodos *models.PaginatedTodos
-	var err error
-
-	if categoryFilter != "" {
-		categoryID, err := strconv.Atoi(categoryFilter)
-		if err != nil {
-			http.Error(w, "Invalid category ID", http.StatusBadRequest)
-			return
-		}
-		paginatedTodos, err = h.todoRepo.GetTodosByCategoryPaginated(categoryID, page, pageSize)
-	} else {
-		paginatedTodos, err = h.todoRepo.GetAllTodosPaginated(page, pageSize)
-	}
-
-	if err != nil {
-		log.Printf("Error fetching todos: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// Validate pagination parameters
+	page, pageSize, validationResult := validation.ValidatePagination(pageStr, pageSizeStr, h.config.MaxPageSize)
+	if !validationResult.IsValid {
+		middleware.HandleValidationError(w, &middleware.ValidationResult{
+			IsValid: false,
+			Errors:  validationResult.Errors,
+		})
 		return
 	}
 
-	categories, err := h.categoryRepo.GetAllCategories()
+	// Get todos using service
+	paginatedTodos, err := h.todoService.GetTodos(categoryFilter, page, pageSize)
 	if err != nil {
-		log.Printf("Error fetching categories: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		middleware.HandleAppError(w, err)
+		return
+	}
+
+	// Get categories
+	categories, err := h.todoService.GetCategories()
+	if err != nil {
+		middleware.HandleAppError(w, err)
 		return
 	}
 
@@ -99,75 +93,78 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	title := strings.TrimSpace(r.FormValue("title"))
-	if title == "" {
-		http.Error(w, "Title is required", http.StatusBadRequest)
-		return
-	}
+	categoryIDsStr := r.Form["categories"]
 
-	categoriesStr := r.FormValue("categories")
+	// Convert category IDs to integers
 	var categoryIDs []int
-	if categoriesStr != "" {
-		categoryIDStrs := strings.Split(categoriesStr, ",")
-		for _, idStr := range categoryIDStrs {
-			if id, err := strconv.Atoi(strings.TrimSpace(idStr)); err == nil && id > 0 {
-				categoryIDs = append(categoryIDs, id)
-			}
+	for _, idStr := range categoryIDsStr {
+		if id, err := strconv.Atoi(idStr); err == nil && id > 0 {
+			categoryIDs = append(categoryIDs, id)
 		}
 	}
 
-	if err := h.todoRepo.CreateTodo(title, categoryIDs); err != nil {
-		log.Printf("Error creating todo: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// Create todo using service
+	err := h.todoService.CreateTodo(title, categoryIDs)
+	if err != nil {
+		middleware.HandleAppError(w, err)
 		return
 	}
 
-	// Return updated todo list for HTMX
-	h.renderTodoList(w, r)
+	// Redirect to index page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *TodoHandler) UpdateTodoStatus(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "Invalid todo ID", http.StatusBadRequest)
-		return
-	}
-
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
 
+	// Get todo ID from URL
+	todoIDStr := chi.URLParam(r, "id")
+	todoID, validationResult := validation.ValidateID(todoIDStr)
+	if !validationResult.IsValid {
+		middleware.HandleValidationError(w, &middleware.ValidationResult{
+			IsValid: false,
+			Errors:  validationResult.Errors,
+		})
+		return
+	}
+
 	status := r.FormValue("status")
-	if status != "complete" && status != "incomplete" {
-		http.Error(w, "Invalid status", http.StatusBadRequest)
+
+	// Update status using service
+	err := h.todoService.UpdateTodoStatus(todoID, status)
+	if err != nil {
+		middleware.HandleAppError(w, err)
 		return
 	}
 
-	if err := h.todoRepo.UpdateTodoStatus(id, status); err != nil {
-		log.Printf("Error updating todo status: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	h.renderTodoList(w, r)
+	// Return success response for HTMX
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *TodoHandler) DeleteTodo(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
+	// Get todo ID from URL
+	todoIDStr := chi.URLParam(r, "id")
+	todoID, validationResult := validation.ValidateID(todoIDStr)
+	if !validationResult.IsValid {
+		middleware.HandleValidationError(w, &middleware.ValidationResult{
+			IsValid: false,
+			Errors:  validationResult.Errors,
+		})
+		return
+	}
+
+	// Delete todo using service
+	err := h.todoService.DeleteTodo(todoID)
 	if err != nil {
-		http.Error(w, "Invalid todo ID", http.StatusBadRequest)
+		middleware.HandleAppError(w, err)
 		return
 	}
 
-	if err := h.todoRepo.DeleteTodo(id); err != nil {
-		log.Printf("Error deleting todo: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	h.renderTodoList(w, r)
+	// Return success response for HTMX
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *TodoHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -177,67 +174,39 @@ func (h *TodoHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	title := strings.TrimSpace(r.FormValue("title"))
-	if title == "" {
-		http.Error(w, "Title is required", http.StatusBadRequest)
-		return
-	}
 
-	if err := h.categoryRepo.CreateCategory(title); err != nil {
-		log.Printf("Error creating category: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	categories, err := h.categoryRepo.GetAllCategories()
+	// Create category using service
+	err := h.todoService.CreateCategory(title)
 	if err != nil {
-		log.Printf("Error fetching categories: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		middleware.HandleAppError(w, err)
 		return
 	}
 
-	data := struct {
-		Categories []models.Category
-	}{
-		Categories: categories,
-	}
-
-	if err := h.templates.ExecuteTemplate(w, "categories-list", data); err != nil {
-		log.Printf("Error executing template: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	// Redirect to index page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *TodoHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
+	// Get category ID from URL
+	categoryIDStr := chi.URLParam(r, "id")
+	categoryID, validationResult := validation.ValidateID(categoryIDStr)
+	if !validationResult.IsValid {
+		middleware.HandleValidationError(w, &middleware.ValidationResult{
+			IsValid: false,
+			Errors:  validationResult.Errors,
+		})
+		return
+	}
+
+	// Delete category using service
+	err := h.todoService.DeleteCategory(categoryID)
 	if err != nil {
-		http.Error(w, "Invalid category ID", http.StatusBadRequest)
+		middleware.HandleAppError(w, err)
 		return
 	}
 
-	if err := h.categoryRepo.DeleteCategory(id); err != nil {
-		log.Printf("Error deleting category: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	categories, err := h.categoryRepo.GetAllCategories()
-	if err != nil {
-		log.Printf("Error fetching categories: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	data := struct {
-		Categories []models.Category
-	}{
-		Categories: categories,
-	}
-
-	if err := h.templates.ExecuteTemplate(w, "categories-list", data); err != nil {
-		log.Printf("Error executing template: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	// Return success response for HTMX
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *TodoHandler) renderTodoList(w http.ResponseWriter, r *http.Request) {
@@ -245,38 +214,20 @@ func (h *TodoHandler) renderTodoList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	pageSizeStr := r.URL.Query().Get("page_size")
 
-	// Parse pagination parameters
-	page := 1
-	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			page = p
-		}
+	// Validate pagination parameters
+	page, pageSize, validationResult := validation.ValidatePagination(pageStr, pageSizeStr, h.config.MaxPageSize)
+	if !validationResult.IsValid {
+		middleware.HandleValidationError(w, &middleware.ValidationResult{
+			IsValid: false,
+			Errors:  validationResult.Errors,
+		})
+		return
 	}
 
-	pageSize := 10 // Default page size
-	if pageSizeStr != "" {
-		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 && ps <= 100 {
-			pageSize = ps
-		}
-	}
-
-	var paginatedTodos *models.PaginatedTodos
-	var err error
-
-	if categoryFilter != "" {
-		categoryID, err := strconv.Atoi(categoryFilter)
-		if err != nil {
-			http.Error(w, "Invalid category ID", http.StatusBadRequest)
-			return
-		}
-		paginatedTodos, err = h.todoRepo.GetTodosByCategoryPaginated(categoryID, page, pageSize)
-	} else {
-		paginatedTodos, err = h.todoRepo.GetAllTodosPaginated(page, pageSize)
-	}
-
+	// Get todos using service
+	paginatedTodos, err := h.todoService.GetTodos(categoryFilter, page, pageSize)
 	if err != nil {
-		log.Printf("Error fetching todos: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		middleware.HandleAppError(w, err)
 		return
 	}
 
@@ -288,7 +239,7 @@ func (h *TodoHandler) renderTodoList(w http.ResponseWriter, r *http.Request) {
 		Pagination: paginatedTodos.Pagination,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "todo-list", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "todo_list.html", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
