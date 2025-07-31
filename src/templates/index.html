@@ -27,7 +27,7 @@
                              {{range .Categories}}
                              <label class="flex items-center">
                                  <input type="checkbox" name="categories" value="{{.ID}}" class="form-checkbox">
-                                 <span class="text-sm ml-2 text-slate-700 dark:text-gray-300">{{.Title}}</span>
+                                 <span class="text-sm ml-2 mr-4 text-slate-700 dark:text-gray-300">{{.Title}}</span>
                              </label>
                              {{end}}
                          </div>
@@ -133,7 +133,7 @@
                            hx-post="/todos/{{.ID}}/status" 
                            hx-target="#todo-list" 
                            hx-vals='{"status": "{{if eq .Status "complete"}}incomplete{{else}}complete{{end}}"}'
-                           class="form-checkbox mr-3">
+                           class="form-checkbox mr-4">
                     <div class="{{if eq .Status "complete"}}line-through text-slate-400 dark:text-gray-500{{else}}text-slate-800 dark:text-gray-100{{end}}">
                         <div class="font-medium">{{.Title}}</div>
                         {{if .Categories}}
