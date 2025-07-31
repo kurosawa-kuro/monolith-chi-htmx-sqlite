@@ -17,6 +17,18 @@ const (
 	Incomplete UpdateTodoStatusFormdataBodyStatus = "incomplete"
 )
 
+// GetTodoListPageParams defines parameters for GetTodoListPage.
+type GetTodoListPageParams struct {
+	// Category Category ID to filter todos
+	Category *string `form:"category,omitempty" json:"category,omitempty"`
+
+	// Page Page number
+	Page *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize Number of items per page
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+}
+
 // CreateCategoryFormdataBody defines parameters for CreateCategory.
 type CreateCategoryFormdataBody struct {
 	// Title Category title
@@ -51,6 +63,9 @@ type UpdateTodoStatusFormdataRequestBody UpdateTodoStatusFormdataBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get todo list page
+	// (GET /)
+	GetTodoListPage(w http.ResponseWriter, r *http.Request, params GetTodoListPageParams)
 	// Create a new category
 	// (POST /categories)
 	CreateCategory(w http.ResponseWriter, r *http.Request)
@@ -71,6 +86,12 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// Get todo list page
+// (GET /)
+func (_ Unimplemented) GetTodoListPage(w http.ResponseWriter, r *http.Request, params GetTodoListPageParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // Create a new category
 // (POST /categories)
@@ -110,6 +131,49 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetTodoListPage operation middleware
+func (siw *ServerInterfaceWrapper) GetTodoListPage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTodoListPageParams
+
+	// ------------- Optional query parameter "category" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "category", r.URL.Query(), &params.Category)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "category", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", r.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", r.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTodoListPage(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // CreateCategory operation middleware
 func (siw *ServerInterfaceWrapper) CreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -327,6 +391,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/", wrapper.GetTodoListPage)
+	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/categories", wrapper.CreateCategory)
 	})

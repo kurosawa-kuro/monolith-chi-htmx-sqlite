@@ -7,6 +7,48 @@ servers:
   - url: http://localhost:8080
     description: Development server
 paths:
+  /:
+    get:
+      operationId: GetTodoListPage
+      summary: Get todo list page
+      description: Display the main todo list page with pagination and category filtering
+      tags:
+        - todos
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Category ID to filter todos
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page
+      responses:
+        '200':
+          description: HTML page with todo list
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request - invalid pagination parameters
+        '500':
+          description: Internal server error
   /todos:
     post:
       operationId: CreateTodo

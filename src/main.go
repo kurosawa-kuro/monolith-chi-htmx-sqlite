@@ -73,7 +73,6 @@ func main() {
 		DefaultPageSize: cfg.App.DefaultPageSize,
 		MaxPageSize:     cfg.App.MaxPageSize,
 	}
-	todoHandler := handlers.NewTodoHandlerWithService(templates, handlerConfig, todoService, logger)
 	oapiHandler := handlers.NewOAPIHandler(templates, handlerConfig, todoService, logger)
 
 	// Setup router
@@ -90,10 +89,7 @@ func main() {
 	filesDir := http.Dir(filepath.Join(workDir, "src/static"))
 	r.Handle("/static/*", http.StripPrefix("/static", http.FileServer(filesDir)))
 
-	// Routes
-	r.Get("/", todoHandler.IndexHandler)
-	
-	// OAPI generated routes
+	// OAPI generated routes (includes GET / for index page)
 	r.Mount("/", gen.HandlerFromMux(oapiHandler, r))
 	
 	// Swagger UI

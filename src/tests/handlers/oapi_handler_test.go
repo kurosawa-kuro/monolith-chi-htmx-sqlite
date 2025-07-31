@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"context"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -9,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"monolith-chi-htmx-sqlite/src/gen"
 	"monolith-chi-htmx-sqlite/src/handlers"
 	"monolith-chi-htmx-sqlite/src/models"
 	"monolith-chi-htmx-sqlite/src/tests/helpers"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -64,7 +63,7 @@ func (m *MockTodoService) DeleteCategory(id int) error {
 	return m.err
 }
 
-func setupTestHandler() (*handlers.TodoHandler, *MockTodoService) {
+func setupTestOAPIHandler() (gen.ServerInterface, *MockTodoService) {
 	mockService := &MockTodoService{}
 
 	// Create a simple test template
@@ -82,12 +81,12 @@ func setupTestHandler() (*handlers.TodoHandler, *MockTodoService) {
 		MaxPageSize:     100,
 	}
 
-	handler := handlers.NewTodoHandlerWithService(tmpl, config, mockService, logrus.New())
+	handler := handlers.NewOAPIHandler(tmpl, config, mockService, logrus.New())
 	return handler, mockService
 }
 
-func TestTodoHandler_IndexHandler_Success(t *testing.T) {
-	handler, mockService := setupTestHandler()
+func TestOAPIHandler_GetTodoListPage_Success(t *testing.T) {
+	handler, mockService := setupTestOAPIHandler()
 	mockTime := helpers.MockTime()
 
 	mockService.todos = []models.Todo{
@@ -112,7 +111,8 @@ func TestTodoHandler_IndexHandler_Success(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
-	handler.IndexHandler(w, req)
+	params := gen.GetTodoListPageParams{}
+	handler.GetTodoListPage(w, req, params)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	body := w.Body.String()
@@ -120,8 +120,8 @@ func TestTodoHandler_IndexHandler_Success(t *testing.T) {
 	assert.Contains(t, body, "Test Category")
 }
 
-func TestTodoHandler_IndexHandler_WithCategoryFilter(t *testing.T) {
-	handler, mockService := setupTestHandler()
+func TestOAPIHandler_GetTodoListPage_WithCategoryFilter(t *testing.T) {
+	handler, mockService := setupTestOAPIHandler()
 	mockTime := helpers.MockTime()
 
 	mockService.todos = []models.Todo{
@@ -137,26 +137,36 @@ func TestTodoHandler_IndexHandler_WithCategoryFilter(t *testing.T) {
 	req := httptest.NewRequest("GET", "/?category=1", nil)
 	w := httptest.NewRecorder()
 
-	handler.IndexHandler(w, req)
+	categoryFilter := "1"
+	params := gen.GetTodoListPageParams{
+		Category: &categoryFilter,
+	}
+	handler.GetTodoListPage(w, req, params)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	body := w.Body.String()
 	assert.Contains(t, body, "Filtered Todo")
 }
 
-func TestTodoHandler_IndexHandler_WithPagination(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_GetTodoListPage_WithPagination(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	req := httptest.NewRequest("GET", "/?page=2&page_size=5", nil)
 	w := httptest.NewRecorder()
 
-	handler.IndexHandler(w, req)
+	page := 2
+	pageSize := 5
+	params := gen.GetTodoListPageParams{
+		Page:     &page,
+		PageSize: &pageSize,
+	}
+	handler.GetTodoListPage(w, req, params)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestTodoHandler_CreateTodo_Success(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_CreateTodo_Success(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	data := url.Values{}
 	data.Set("title", "New Todo")
@@ -172,8 +182,8 @@ func TestTodoHandler_CreateTodo_Success(t *testing.T) {
 	assert.Equal(t, http.StatusSeeOther, w.Code)
 }
 
-func TestTodoHandler_CreateTodo_EmptyTitle(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_CreateTodo_EmptyTitle(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	data := url.Values{}
 	data.Set("title", "")
@@ -188,8 +198,8 @@ func TestTodoHandler_CreateTodo_EmptyTitle(t *testing.T) {
 	assert.Equal(t, http.StatusSeeOther, w.Code)
 }
 
-func TestTodoHandler_UpdateTodoStatus_Success(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_UpdateTodoStatus_Success(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	data := url.Values{}
 	data.Set("status", "complete")
@@ -198,40 +208,24 @@ func TestTodoHandler_UpdateTodoStatus_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 
-	// Set URL parameters
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-		URLParams: chi.RouteParams{
-			Keys:   []string{"id"},
-			Values: []string{"1"},
-		},
-	}))
-
-	handler.UpdateTodoStatus(w, req)
+	handler.UpdateTodoStatus(w, req, 1)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestTodoHandler_DeleteTodo_Success(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_DeleteTodo_Success(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	req := httptest.NewRequest("DELETE", "/todos/1", nil)
 	w := httptest.NewRecorder()
 
-	// Set URL parameters
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-		URLParams: chi.RouteParams{
-			Keys:   []string{"id"},
-			Values: []string{"1"},
-		},
-	}))
-
-	handler.DeleteTodo(w, req)
+	handler.DeleteTodo(w, req, 1)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestTodoHandler_CreateCategory_Success(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_CreateCategory_Success(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	data := url.Values{}
 	data.Set("title", "New Category")
@@ -245,8 +239,8 @@ func TestTodoHandler_CreateCategory_Success(t *testing.T) {
 	assert.Equal(t, http.StatusSeeOther, w.Code)
 }
 
-func TestTodoHandler_CreateCategory_EmptyTitle(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_CreateCategory_EmptyTitle(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	data := url.Values{}
 	data.Set("title", "")
@@ -260,21 +254,13 @@ func TestTodoHandler_CreateCategory_EmptyTitle(t *testing.T) {
 	assert.Equal(t, http.StatusSeeOther, w.Code)
 }
 
-func TestTodoHandler_DeleteCategory_Success(t *testing.T) {
-	handler, _ := setupTestHandler()
+func TestOAPIHandler_DeleteCategory_Success(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
 
 	req := httptest.NewRequest("DELETE", "/categories/1", nil)
 	w := httptest.NewRecorder()
 
-	// Set URL parameters
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
-		URLParams: chi.RouteParams{
-			Keys:   []string{"id"},
-			Values: []string{"1"},
-		},
-	}))
-
-	handler.DeleteCategory(w, req)
+	handler.DeleteCategory(w, req, 1)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
