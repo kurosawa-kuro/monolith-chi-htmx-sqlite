@@ -118,8 +118,8 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to first page after creating todo
-	http.Redirect(w, r, "/?page=1", http.StatusSeeOther)
+	// Return updated todo list for HTMX
+	h.renderTodoList(w, r)
 }
 
 func (h *TodoHandler) UpdateTodoStatus(w http.ResponseWriter, r *http.Request) {
