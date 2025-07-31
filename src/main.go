@@ -20,6 +20,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"monolith-chi-htmx-sqlite/src/gen"
 )
 
 // @title           Todo API
@@ -73,6 +74,7 @@ func main() {
 		MaxPageSize:     cfg.App.MaxPageSize,
 	}
 	todoHandler := handlers.NewTodoHandlerWithService(templates, handlerConfig, todoService, logger)
+	oapiHandler := handlers.NewOAPIHandler(templates, handlerConfig, todoService, logger)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -90,11 +92,11 @@ func main() {
 
 	// Routes
 	r.Get("/", todoHandler.IndexHandler)
-	r.Post("/todos", todoHandler.CreateTodo)
-	r.Post("/todos/{id}/status", todoHandler.UpdateTodoStatus)
-	r.Delete("/todos/{id}", todoHandler.DeleteTodo)
-	r.Post("/categories", todoHandler.CreateCategory)
-	r.Delete("/categories/{id}", todoHandler.DeleteCategory)
+	
+	// OAPI generated routes
+	r.Mount("/", gen.HandlerFromMux(oapiHandler, r))
+	
+	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler())
 
 	serverAddr := cfg.Server.Host + ":" + cfg.Server.Port

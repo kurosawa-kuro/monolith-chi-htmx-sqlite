@@ -1,0 +1,177 @@
+openapi: 3.0.0
+info:
+  title: Todo API
+  description: This is a sample server for a todo app.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Development server
+paths:
+  /todos:
+    post:
+      operationId: CreateTodo
+      summary: Create a new todo
+      tags:
+        - todos
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: Todo title
+                categories:
+                  type: array
+                  items:
+                    type: integer
+                  description: Category IDs to assign to the todo
+      responses:
+        '303':
+          description: Redirect to todo list page
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /todos/{id}:
+    delete:
+      operationId: DeleteTodo
+      summary: Delete a todo
+      tags:
+        - todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Todo deleted successfully
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /todos/{id}/status:
+    post:
+      operationId: UpdateTodoStatus
+      summary: Update todo status
+      tags:
+        - todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [incomplete, complete]
+      responses:
+        '200':
+          description: Status updated successfully
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /categories:
+    post:
+      operationId: CreateCategory
+      summary: Create a new category
+      tags:
+        - categories
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: Category title
+      responses:
+        '303':
+          description: Redirect to todo list page
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /categories/{id}:
+    delete:
+      operationId: DeleteCategory
+      summary: Delete a category
+      tags:
+        - categories
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category deleted successfully
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    Todo:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        status:
+          type: string
+          enum: [incomplete, complete]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+      required:
+        - id
+        - title
+        - status
+        - created_at
+        - updated_at
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        todo_count:
+          type: integer
+      required:
+        - id
+        - title
+        - created_at 

@@ -373,3 +373,19 @@ docs:
 	@echo "Generating OpenAPI/Swagger docs..."
 	@swag init -g src/main.go -o src/docs
 	@echo "Swagger docs generated in src/docs/"
+
+.PHONY: oapi-gen
+# OpenAPI Code Generation
+# 例: make oapi-gen
+# 依存: oapi-codegen (go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest)
+oapi-gen:
+	@echo "Generating OpenAPI code..."
+	@oapi-codegen --package gen --generate types,chi-server -o src/gen/api.gen.go api.yaml
+	@echo "OpenAPI code generated in src/gen/"
+
+.PHONY: oapi-install
+# Install oapi-codegen tool
+oapi-install:
+	@echo "Installing oapi-codegen..."
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	@echo "oapi-codegen installed successfully"
