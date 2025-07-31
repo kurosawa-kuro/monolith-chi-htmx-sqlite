@@ -3,7 +3,7 @@
 {{define "content"}}
 <div class="sm:flex sm:justify-between sm:items-center mb-8">
     <div class="mb-4 sm:mb-0">
-        <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-white font-bold">Todo List ✨</h1>
+        <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-gray-100 font-bold">Todo List ✨</h1>
     </div>
 </div>
 
@@ -11,23 +11,23 @@
     <!-- Todo List Column -->
     <div class="col-span-12 xl:col-span-8">
         <!-- Add Todo Form -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700 mb-6">
-            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700">
-                <h2 class="font-semibold text-slate-800 dark:text-white">新しいTodoを追加</h2>
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60 mb-6">
+            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
+                <h2 class="font-semibold text-slate-800 dark:text-gray-100">新しいTodoを追加</h2>
             </header>
             <div class="p-5">
                 <form hx-post="/todos" hx-target="#todo-list" hx-swap="innerHTML">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-200" for="title">タイトル <span class="text-rose-500">*</span></label>
-                        <input id="title" name="title" class="form-input w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" type="text" required />
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="title">タイトル <span class="text-rose-500">*</span></label>
+                        <input id="title" name="title" class="form-input w-full dark:bg-gray-800 dark:border-gray-700/60 dark:text-gray-300 dark:placeholder-gray-500" type="text" required />
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-200">カテゴリ</label>
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300">カテゴリ</label>
                         <div class="grid grid-cols-2 gap-2">
                             {{range .Categories}}
                             <label class="flex items-center">
                                 <input type="checkbox" name="categories" value="{{.ID}}" class="form-checkbox">
-                                <span class="text-sm ml-2 text-slate-700 dark:text-gray-200">{{.Title}}</span>
+                                <span class="text-sm ml-2 text-slate-700 dark:text-gray-300">{{.Title}}</span>
                             </label>
                             {{end}}
                         </div>
@@ -45,15 +45,15 @@
         </div>
 
         <!-- Filter -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700 mb-6">
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60 mb-6">
             <div class="px-5 py-4">
                 <div class="flex flex-wrap items-center space-x-2">
-                    <span class="text-sm font-medium text-slate-800 dark:text-white">フィルタ:</span>
-                    <a href="/" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-200 {{if eq .Filter ""}}bg-indigo-500 text-white{{end}}">
+                    <span class="text-sm font-medium text-slate-800 dark:text-gray-100">フィルタ:</span>
+                    <a href="/" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq .Filter ""}}bg-indigo-500 text-white{{end}}">
                         すべて
                     </a>
                     {{range .Categories}}
-                    <a href="/?category={{.ID}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-200 {{if eq $.Filter (printf "%d" .ID)}}bg-indigo-500 text-white{{end}}">
+                    <a href="/?category={{.ID}}" class="btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-gray-700/30 dark:hover:bg-gray-700/50 text-slate-500 dark:text-gray-400 {{if eq $.Filter (printf "%d" .ID)}}bg-indigo-500 text-white{{end}}">
                         {{.Title}}
                     </a>
                     {{end}}
@@ -62,9 +62,9 @@
         </div>
 
         <!-- Todo List -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700">
-            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700">
-                <h2 class="font-semibold text-slate-800 dark:text-white">Todo Items</h2>
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60">
+            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
+                <h2 class="font-semibold text-slate-800 dark:text-gray-100">Todo Items</h2>
             </header>
             <div id="todo-list">
                 {{template "todo-list" .}}
@@ -75,15 +75,15 @@
     <!-- Categories Column -->
     <div class="col-span-12 xl:col-span-4">
         <!-- Add Category Form -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700 mb-6">
-            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700">
-                <h2 class="font-semibold text-slate-800 dark:text-white">新しいカテゴリを追加</h2>
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60 mb-6">
+            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
+                <h2 class="font-semibold text-slate-800 dark:text-gray-100">新しいカテゴリを追加</h2>
             </header>
             <div class="p-5">
                 <form hx-post="/categories" hx-target="#categories-list" hx-swap="innerHTML">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-200" for="category-title">カテゴリ名 <span class="text-rose-500">*</span></label>
-                        <input id="category-title" name="title" class="form-input w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" type="text" required />
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-gray-300" for="category-title">カテゴリ名 <span class="text-rose-500">*</span></label>
+                        <input id="category-title" name="title" class="form-input w-full dark:bg-gray-800 dark:border-gray-700/60 dark:text-gray-300 dark:placeholder-gray-500" type="text" required />
                     </div>
                     <div class="flex flex-wrap justify-end space-x-2">
                         <button class="btn bg-emerald-500 hover:bg-emerald-600 text-white" type="submit">
@@ -98,9 +98,9 @@
         </div>
 
         <!-- Categories List -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700">
-            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700">
-                <h2 class="font-semibold text-slate-800 dark:text-white">カテゴリ一覧</h2>
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-slate-200 dark:border-gray-700/60">
+            <header class="px-5 py-4 border-b border-slate-100 dark:border-gray-700/60">
+                <h2 class="font-semibold text-slate-800 dark:text-gray-100">カテゴリ一覧</h2>
             </header>
             <div id="categories-list">
                 {{template "categories-list" .}}
@@ -114,7 +114,7 @@
 <div class="p-3">
     {{if .Todos}}
     {{range .Todos}}
-    <div class="flex items-center py-2 border-b border-slate-100 dark:border-gray-700 last:border-b-0">
+    <div class="flex items-center py-2 border-b border-slate-100 dark:border-gray-700/60 last:border-b-0">
         <div class="w-9 h-9 rounded-full shrink-0 bg-gradient-to-tr from-sky-500 to-sky-400 mr-3">
             <svg class="w-9 h-9 fill-current text-white" viewBox="0 0 36 36">
                 <path d="m18.3 16.7-6.6 6.6c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l5.9-5.9L25.9 25c.4.4 1 .4 1.4 0 .4-.4.4-1 0-1.4L20.4 16.7c-.2-.2-.4-.3-.7-.3-.3 0-.5.1-.7.3-.2.2-.3.4-.3.7 0 .3.1.5.3.7z" />
@@ -129,12 +129,12 @@
                            hx-target="#todo-list" 
                            hx-vals='{"status": "{{if eq .Status "complete"}}incomplete{{else}}complete{{end}}"}'
                            class="form-checkbox mr-3">
-                    <div class="{{if eq .Status "complete"}}line-through text-slate-400 dark:text-gray-500{{else}}text-slate-800 dark:text-white{{end}}">
+                    <div class="{{if eq .Status "complete"}}line-through text-slate-400 dark:text-gray-500{{else}}text-slate-800 dark:text-gray-100{{end}}">
                         <div class="font-medium">{{.Title}}</div>
                         {{if .Categories}}
                         <div class="text-xs flex flex-wrap gap-1 mt-1">
                             {{range .Categories}}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300">
                                 {{.Title}}
                             </span>
                             {{end}}
@@ -145,7 +145,7 @@
                 <button hx-delete="/todos/{{.ID}}" 
                         hx-target="#todo-list" 
                         hx-confirm="本当に削除しますか？"
-                        class="text-slate-400 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-400">
+                        class="text-slate-400 dark:text-gray-500 hover:text-rose-500 dark:hover:text-rose-400">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
                         <path d="M5 7h2v6H5V7zm4 0h2v6H9V7zm3-6V0h-1V1H5V0H4v1H1v2h14V1h-3zM2 4v10c0 .6.4 1 1 1h10c.6 0 1-.4 1-1V4H2z" />
                     </svg>
@@ -172,15 +172,15 @@
 <div class="p-3">
     {{if .Categories}}
     {{range .Categories}}
-    <div class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-gray-700 last:border-b-0">
+    <div class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-gray-700/60 last:border-b-0">
         <div class="flex items-center">
             <div class="w-2 h-2 rounded-full bg-indigo-400 mr-3"></div>
-            <span class="text-sm font-medium text-slate-800 dark:text-white">{{.Title}}</span>
+            <span class="text-sm font-medium text-slate-800 dark:text-gray-100">{{.Title}}</span>
         </div>
         <button hx-delete="/categories/{{.ID}}" 
                 hx-target="#categories-list" 
                 hx-confirm="本当に削除しますか？"
-                class="text-slate-400 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-400">
+                class="text-slate-400 dark:text-gray-500 hover:text-rose-500 dark:hover:text-rose-400">
             <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
                 <path d="M5 7h2v6H5V7zm4 0h2v6H9V7zm3-6V0h-1V1H5V0H4v1H1v2h14V1h-3zM2 4v10c0 .6.4 1 1 1h10c.6 0 1-.4 1-1V4H2z" />
             </svg>
