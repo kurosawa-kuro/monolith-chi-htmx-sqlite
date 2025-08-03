@@ -212,6 +212,12 @@ func (h *OAPIHandler) GetTodoDetail(w http.ResponseWriter, r *http.Request, id i
 		return
 	}
 
+	// Check if todo exists
+	if todo == nil {
+		http.Error(w, "Todo not found", http.StatusNotFound)
+		return
+	}
+
 	// Get all categories for the edit form
 	categories, err := h.todoService.GetCategories()
 	if err != nil {

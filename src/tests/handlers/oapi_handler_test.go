@@ -63,10 +63,27 @@ func (m *MockTodoService) DeleteCategory(id int) error {
 	return m.err
 }
 
+func (m *MockTodoService) GetTodoByID(id int) (*models.Todo, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	// Find todo by ID
+	for _, todo := range m.todos {
+		if todo.ID == id {
+			return &todo, nil
+		}
+	}
+	return nil, nil
+}
+
+func (m *MockTodoService) UpdateTodo(id int, title string, categoryIDs []int) error {
+	return m.err
+}
+
 func setupTestOAPIHandler() (gen.ServerInterface, *MockTodoService) {
 	mockService := &MockTodoService{}
 
-	// Create a simple test template
+	// Create test templates
 	tmpl := template.Must(template.New("index.html").Parse(`
 		{{range .Todos}}
 			<div class="todo">{{.Title}}</div>
@@ -75,6 +92,17 @@ func setupTestOAPIHandler() (gen.ServerInterface, *MockTodoService) {
 			<div class="category">{{.Title}}</div>
 		{{end}}
 	`))
+
+	// Add todo_detail.html template
+	tmpl.New("todo_detail.html").Parse(`
+		<div class="todo-detail">
+			<h1>{{.Todo.Title}}</h1>
+			<p>Status: {{.Todo.Status}}</p>
+			{{range .Categories}}
+				<div class="category">{{.Title}}</div>
+			{{end}}
+		</div>
+	`)
 
 	config := &handlers.Config{
 		DefaultPageSize: 10,
@@ -261,6 +289,147 @@ func TestOAPIHandler_DeleteCategory_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	handler.DeleteCategory(w, req, 1)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestOAPIHandler_GetTodoDetail_Success(t *testing.T) {
+	handler, mockService := setupTestOAPIHandler()
+	mockTime := helpers.MockTime()
+
+	// Setup mock data
+	mockService.todos = []models.Todo{
+		{
+			ID:        1,
+			Title:     "Test Todo Detail",
+			Status:    "incomplete",
+			CreatedAt: mockTime,
+			UpdatedAt: mockTime,
+			Categories: []models.Category{
+				{
+					ID:        1,
+					Title:     "Work",
+					CreatedAt: mockTime,
+				},
+				{
+					ID:        2,
+					Title:     "Personal",
+					CreatedAt: mockTime,
+				},
+			},
+		},
+	}
+
+	mockService.categories = []models.Category{
+		{
+			ID:        1,
+			Title:     "Work",
+			CreatedAt: mockTime,
+		},
+		{
+			ID:        2,
+			Title:     "Personal",
+			CreatedAt: mockTime,
+		},
+		{
+			ID:        3,
+			Title:     "Shopping",
+			CreatedAt: mockTime,
+		},
+	}
+
+	req := httptest.NewRequest("GET", "/todos/1", nil)
+	w := httptest.NewRecorder()
+
+	handler.GetTodoDetail(w, req, 1)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	body := w.Body.String()
+	assert.Contains(t, body, "Test Todo Detail")
+	assert.Contains(t, body, "incomplete")
+	assert.Contains(t, body, "Work")
+	assert.Contains(t, body, "Personal")
+	assert.Contains(t, body, "Shopping")
+}
+
+func TestOAPIHandler_GetTodoDetail_NotFound(t *testing.T) {
+	handler, mockService := setupTestOAPIHandler()
+
+	// Setup empty todos to simulate not found
+	mockService.todos = []models.Todo{}
+
+	req := httptest.NewRequest("GET", "/todos/999", nil)
+	w := httptest.NewRecorder()
+
+	handler.GetTodoDetail(w, req, 999)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestOAPIHandler_UpdateTodo_Success(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
+
+	// Setup form data
+	formData := url.Values{}
+	formData.Set("title", "Updated Todo Title")
+	formData.Set("categories", "1,2")
+
+	req := httptest.NewRequest("PUT", "/todos/1", strings.NewReader(formData.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	handler.UpdateTodo(w, req, 1)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestOAPIHandler_UpdateTodo_EmptyTitle(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
+
+	// Setup form data with empty title
+	formData := url.Values{}
+	formData.Set("title", "")
+	formData.Set("categories", "1,2")
+
+	req := httptest.NewRequest("PUT", "/todos/1", strings.NewReader(formData.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	handler.UpdateTodo(w, req, 1)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestOAPIHandler_UpdateTodo_NoCategories(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
+
+	// Setup form data without categories
+	formData := url.Values{}
+	formData.Set("title", "Updated Todo Title")
+	formData.Set("categories", "")
+
+	req := httptest.NewRequest("PUT", "/todos/1", strings.NewReader(formData.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	handler.UpdateTodo(w, req, 1)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestOAPIHandler_UpdateTodo_InvalidCategoryIDs(t *testing.T) {
+	handler, _ := setupTestOAPIHandler()
+
+	// Setup form data with invalid category IDs
+	formData := url.Values{}
+	formData.Set("title", "Updated Todo Title")
+	formData.Set("categories", "invalid,abc,123")
+
+	req := httptest.NewRequest("PUT", "/todos/1", strings.NewReader(formData.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	handler.UpdateTodo(w, req, 1)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }

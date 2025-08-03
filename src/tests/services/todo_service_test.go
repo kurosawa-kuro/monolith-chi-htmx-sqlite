@@ -25,7 +25,24 @@ func (m *MockTodoRepository) GetTodosByCategory(categoryID int) ([]models.Todo, 
 	return m.todos, m.err
 }
 
+func (m *MockTodoRepository) GetTodoByID(id int) (*models.Todo, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	// Find todo by ID
+	for _, todo := range m.todos {
+		if todo.ID == id {
+			return &todo, nil
+		}
+	}
+	return nil, nil
+}
+
 func (m *MockTodoRepository) CreateTodo(title string, categoryIDs []int) error {
+	return m.err
+}
+
+func (m *MockTodoRepository) UpdateTodo(id int, title string, categoryIDs []int) error {
 	return m.err
 }
 
@@ -264,6 +281,85 @@ func TestTodoService_DeleteCategory_Success(t *testing.T) {
 	service := services.NewTodoService(todoRepo, categoryRepo)
 
 	err := service.DeleteCategory(1)
+
+	require.NoError(t, err)
+}
+
+func TestTodoService_GetTodoByID_Success(t *testing.T) {
+	mockTime := helpers.MockTime()
+	todos := []models.Todo{
+		{
+			ID:        1,
+			Title:     "Test Todo",
+			Status:    "incomplete",
+			CreatedAt: mockTime,
+			UpdatedAt: mockTime,
+			Categories: []models.Category{
+				{
+					ID:        1,
+					Title:     "Work",
+					CreatedAt: mockTime,
+				},
+			},
+		},
+	}
+
+	todoRepo := &MockTodoRepository{todos: todos}
+	categoryRepo := &MockCategoryRepository{}
+
+	service := services.NewTodoService(todoRepo, categoryRepo)
+
+	result, err := service.GetTodoByID(1)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "Test Todo", result.Title)
+	assert.Equal(t, "incomplete", result.Status)
+	assert.Len(t, result.Categories, 1)
+	assert.Equal(t, "Work", result.Categories[0].Title)
+}
+
+func TestTodoService_GetTodoByID_NotFound(t *testing.T) {
+	todoRepo := &MockTodoRepository{todos: []models.Todo{}}
+	categoryRepo := &MockCategoryRepository{}
+
+	service := services.NewTodoService(todoRepo, categoryRepo)
+
+	result, err := service.GetTodoByID(999)
+
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestTodoService_UpdateTodo_Success(t *testing.T) {
+	todoRepo := &MockTodoRepository{}
+	categoryRepo := &MockCategoryRepository{}
+
+	service := services.NewTodoService(todoRepo, categoryRepo)
+
+	err := service.UpdateTodo(1, "Updated Todo Title", []int{1, 2})
+
+	require.NoError(t, err)
+}
+
+func TestTodoService_UpdateTodo_EmptyTitle(t *testing.T) {
+	todoRepo := &MockTodoRepository{}
+	categoryRepo := &MockCategoryRepository{}
+
+	service := services.NewTodoService(todoRepo, categoryRepo)
+
+	err := service.UpdateTodo(1, "", []int{1, 2})
+
+	assert.Error(t, err)
+}
+
+func TestTodoService_UpdateTodo_NoCategories(t *testing.T) {
+	todoRepo := &MockTodoRepository{}
+	categoryRepo := &MockCategoryRepository{}
+
+	service := services.NewTodoService(todoRepo, categoryRepo)
+
+	err := service.UpdateTodo(1, "Updated Todo Title", []int{})
 
 	require.NoError(t, err)
 }
